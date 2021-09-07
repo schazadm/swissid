@@ -23,19 +23,13 @@
  * @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
  *  International Registered Trademark & Property of PrestaShop SA
  */
-$sql = array();
+$sql = [];
 
-$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'swissid_configuration` (
-    `id_swissid_configuration` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `client_id` VARCHAR(256) NOT NULL UNIQUE,
-    `client_secret` VARCHAR(256) NOT NULL,
-    PRIMARY KEY  (`id_swissid_configuration`)
-) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
-
-$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'swissid_user` (
-    `id_swissid_user` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `id_customer` INTEGER(10) UNSIGNED NOT NULL,
-    PRIMARY KEY  (`id_swissid_user`),
+$sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'swissid_customer` (
+    `id_swissid_customer` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `id_customer` INT(10) UNSIGNED NOT NULL,
+    `age_over` TINYINT(1) UNSIGNED DEFAULT 0,
+    PRIMARY KEY  (`id_swissid_customer`),
     KEY `id_customer` (`id_customer`)
 ) ENGINE=' . _MYSQL_ENGINE_ . ' DEFAULT CHARSET=utf8;';
 

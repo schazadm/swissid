@@ -90,16 +90,18 @@ class Swissid extends Module
      */
     public function getContent()
     {
+        // check whether a post was made
         if (Tools::isSubmit('submitSwissidModule')) {
             if ($this->validateSubmittedValues()) {
                 $this->updateValues();
             }
+            $this->addConfirmationMessage();
+            $this->addErrorMessage();
         }
 
-        $this->addConfirmationMessage();
-        $this->addErrorMessage();
+        $this->context->smarty->assign('module_dir', $this->_path);
+        $this->_html .= $this->fetch($this->local_path . 'views/templates/admin/configure.tpl');
         $this->_html .= $this->renderForm();
-
         return $this->_html;
     }
 
@@ -160,6 +162,44 @@ class Swissid extends Module
                         'required' => true,
                         'maxlength' => 256,
                     ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Age verification'),
+                        'name' => 'SWISSID_AGE_VERIFICATION',
+                        'desc' => $this->l('Decide whether the age should be verified'),
+                        'is_bool' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => true,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => false,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Age verification optional'),
+                        'name' => 'SWISSID_AGE_VERIFICATION_OPTIONAL',
+                        'desc' => $this->l('Decide whether the age verification should be optional or mandatory. If this is option is set to True then the age verification can be skipped.'),
+                        'is_bool' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => true,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => false,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -173,6 +213,8 @@ class Swissid extends Module
         return [
             'SWISSID_CLIENT_ID' => Configuration::get('SWISSID_CLIENT_ID'),
             'SWISSID_CLIENT_SECRET' => Configuration::get('SWISSID_CLIENT_SECRET'),
+            'SWISSID_AGE_VERIFICATION' => Configuration::get('SWISSID_AGE_VERIFICATION'),
+            'SWISSID_AGE_VERIFICATION_OPTIONAL' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
         ];
     }
 
@@ -202,7 +244,7 @@ class Swissid extends Module
         }
 
         if (count($this->_errors) <= 0) {
-             $this->_confirmations[] = $this->trans('The settings have been successfully updated.', [], 'Admin.Notifications.Success');
+            $this->_confirmations[] = $this->trans('The settings have been successfully updated.', [], 'Admin.Notifications.Success');
         }
     }
 
