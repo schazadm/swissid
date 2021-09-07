@@ -1,2 +1,1 @@
-# swissid
-presta-mod: swissid authetification
+# SwissID

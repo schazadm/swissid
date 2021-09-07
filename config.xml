@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>swissid</name>
+	<displayName><![CDATA[SwissID]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Log in easily and securely with SwissID.]]></description>
+	<author><![CDATA[Online Services Rieder GmbH]]></author>
+	<tab><![CDATA[merchandizing]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+</module>

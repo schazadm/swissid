@@ -1,0 +1,21 @@
+{
+  "name": "osr/swissid",
+  "description": "This is a authentication module",
+  "authors": [
+    {
+      "name": "OSR Dev",
+      "email": "info@os-rieder.ch"
+    }
+  ],
+  "autoload": {
+    "classmap": [
+      "src/Entity"
+    ],
+    "psr-4": {
+      "OSR\\Swissid\\": "src/"
+    }
+  },
+  "require": {
+    "firebase/php-jwt": "*"
+  }
+}
