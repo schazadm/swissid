@@ -1,0 +1,3 @@
+_article:
+  resource: 'routes/article.yml'
+  prefix: /training/article

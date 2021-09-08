@@ -1,0 +1,36 @@
+services:
+  training.provider.hello_world_provider:
+    class: 'OSR\Training\Provider\HelloWorldProvider'
+    arguments:
+      - '@training.module'
+
+  training.module:
+    class: Training
+    factory: [ 'Module', 'getInstanceByName' ]
+    arguments:
+      - 'training'
+
+  training.grid.factory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\GridFactory'
+    arguments:
+      - '@training.grid.definition.article_grid_definition_factory'
+      - '@training.grid.article_data_factory'
+      - '@prestashop.core.grid.filter.form_factory'
+
+  training.grid.definition.article_grid_definition_factory:
+    class: 'OSR\Training\Grid\Definition\ArticleGridDefinitionFactory'
+
+  training.grid.article_data_factory:
+    class: 'PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory'
+    arguments:
+      - '@training.grid.query_builder.article_query_builder'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - '%database_prefix%training_article'
+
+  training.grid.query_builder.article_query_builder:
+    class: 'OSR\Training\Grid\QueryBuilder\ArticleQueryBuilder'
+    arguments:
+      - '@doctrine.dbal.default_connection'
+      - '%database_prefix%'
+      - "@=service('prestashop.adapter.legacy.context').getContext().language.id"
