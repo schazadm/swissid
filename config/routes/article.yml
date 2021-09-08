@@ -1,7 +1,0 @@
-training_admin_article:
-  path: /
-  methods: [GET, POST]
-  defaults:
-    _controller: 'OSR\Training\Controller\Admin\TrainingArticleController::indexAction'
-    _legacy_controller: AdminTrainingArticle
-    _legacy_link: AdminTrainingArticle
