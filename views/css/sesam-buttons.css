@@ -1,0 +1,120 @@
+/**
+ * Fonts
+ */
+@font-face {
+    font-family: "SwissSignCircularWeb";
+    src: url("fonts/SwissSignCircularWeb-Bold.eot");
+    src: url("fonts/SwissSignCircularWeb-Bold.eot?#iefix") format("embedded-opentype"),
+    url("fonts/SwissSignCircularWeb-Bold.woff2") format("woff2"),
+    url("fonts/SwissSignCircularWeb-Bold.woff") format("woff");
+    font-weight: bold;
+}
+
+/**
+ * Buttons
+ */
+button, html input[type="button"], input[type="reset"], input[type="submit"] {
+    -webkit-appearance: button;
+    cursor: pointer;
+}
+
+button, select {
+    text-transform: none;
+}
+
+button {
+    overflow: visible;
+}
+
+button, input, optgroup, select, textarea {
+    margin: 0;
+    font: inherit;
+    color: inherit;
+}
+
+.swissid-btn {
+    font-family: 'SwissSignCircularWeb', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: 2px;
+    padding: 1px 0 0;
+    text-decoration: none;
+}
+
+.swissid-btn-primary {
+    color: #ffffff;
+    background-color: #eb0000;
+    font-weight: bold;
+}
+
+.swissid-btn.swissid-btn-rounded {
+    border-radius: 25px; /* MUST be half of button height */
+    padding-left: 70px;
+    padding-right: 30px;
+}
+
+.swissid-btn.swissid-btn-rounded span {
+    left: 5px;
+}
+
+/**
+ * Relying partners buttons
+ */
+.swissid-btn-connect {
+    position: relative;
+    text-align: center;
+    padding-left: 55px;
+    padding-right: 15px;
+    height: 50px;
+    line-height: 50px; /* line-height MUST be the same as the height of the button to centre text vertically. */
+}
+
+.swissid-btn-mini {
+    padding: 0;
+    width: 50px;
+}
+
+.swissid-btn-connect span {
+    content: " ";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 50px;
+    height: 50px;
+    background: url(../images/connect.svg) no-repeat,
+    linear-gradient(transparent, transparent);
+}
+
+.swissid-btn-connect-light {
+    background: #ffffff;
+    color: #eb0000;
+    border: #eb0000 solid 1px;
+    padding-left: 65px;
+    padding-top: 0;
+}
+
+.swissid-btn-connect-light span {
+    top: -1px;
+    left: -1px;
+    background-color: #eb0000;
+    border-radius: 2px;
+}
+
+.swissid-btn-connect-black {
+    background-color: #000000;
+}
+
+.swissid-btn-connect-dual-grey {
+    background-color: #efefef;
+    color: #747474;
+}
+
+.swissid-btn-connect-dual-grey span {
+    background-color: #747474;
+}
+
+.swissid-btn-connect-dual-grey {
+    padding-left: 65px;
+}
