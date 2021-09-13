@@ -1,5 +1,6 @@
 <?php
 
+use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 
 class AdminSwissidConfigurationController extends ModuleAdminController
 {
@@ -16,11 +17,22 @@ class AdminSwissidConfigurationController extends ModuleAdminController
 
     public function init()
     {
+        $this->context->smarty->assign([
+            'module_dir' => $this->module->getPathUri(),
+            'info_tpl' => $this->module->getLocalPath() . 'views/templates/admin/info.tpl'
+        ]);
+
         parent::init();
-        $this->initOptions();
+
+        $this->context->smarty->assign([
+            'form' => $this->initOptions()
+        ]);
     }
 
-    private function initOptions()
+    /**
+     * @return string
+     */
+    public function initOptions()
     {
         $this->fields_options = [
             'swissid' => [
@@ -60,6 +72,8 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                 ]
             ]
         ];
+
+        return $this->renderOptions();
     }
 
     public function setMedia($isNewTheme = false)
@@ -75,20 +89,5 @@ class AdminSwissidConfigurationController extends ModuleAdminController
             'ageVerificationInputName' => 'SWISSID_AGE_VERIFICATION',
             'ageVerificationOptionalInputName' => 'SWISSID_AGE_VERIFICATION_OPTIONAL',
         ]);
-    }
-
-    public function beforeUpdateOptions()
-    {
-        parent::beforeUpdateOptions();
-    }
-
-    private function getConfigFormValues()
-    {
-        return [
-            'SWISSID_CLIENT_ID' => Configuration::get('SWISSID_CLIENT_ID'),
-            'SWISSID_CLIENT_SECRET' => Configuration::get('SWISSID_CLIENT_SECRET'),
-            'SWISSID_AGE_VERIFICATION' => Configuration::get('SWISSID_AGE_VERIFICATION'),
-            'SWISSID_AGE_VERIFICATION_OPTIONAL' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
-        ];
     }
 }
