@@ -1,15 +1,25 @@
 <div class="panel">
-    <div class="row moduleconfig-header">
+
+    <div class="panel-heading">
+        <i class="icon-info-circle"></i>
+        {l s='SwissID RP Information' mod='swissid'}
+
+        <span class="pull-right">
+            <a id="swissid-panel-toggle" class="btn" data-toggle="collapse" data-target=".moduleConfig-content">
+                    <span class="icon-plus"></span>
+            </a>
+        </span>
+    </div>
+
+    <div class="row moduleConfig-header">
         <div class="col-xs-12 text-left">
             <img src="{$module_dir|escape:'html':'UTF-8'}views/img/swissid_logo.svg" alt="SwissID Logo"/>
-            <h2>{l s='Lorem' mod='swissid'}</h2>
-            <h4>{l s='Lorem ipsum dolor' mod='swissid'}</h4>
         </div>
     </div>
 
-    <hr/>
+    <div class="moduleConfig-content collapse">
+        <hr/>
 
-    <div class="moduleconfig-content">
         <div class="row">
             <div class="col-xs-12">
                 <h4>{l s='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor' mod='swissid'}</h4>

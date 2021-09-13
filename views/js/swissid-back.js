@@ -34,5 +34,21 @@
                 parentFormGroup.addClass('collapse');
             }
         }
+
+        //
+        $('#swissid-panel-toggle').click(function () {
+            togglePanelHeadingIcon();
+        });
+
+        function togglePanelHeadingIcon() {
+            let element = $('#swissid-panel-toggle span');
+            let plusIcon = 'icon-plus';
+            let minusIcon = 'icon-minus';
+            if (element.hasClass(plusIcon)) {
+                element.removeClass(plusIcon).addClass(minusIcon);
+            } else {
+                element.removeClass(minusIcon).addClass(plusIcon);
+            }
+        }
     });
 })(jQuery);
