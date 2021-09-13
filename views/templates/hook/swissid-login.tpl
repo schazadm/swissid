@@ -5,7 +5,7 @@
 </style>
 <form id="swissid-form" method="POST" target="_self" action="{$login_url}">
     <div id="swissid-content-login" class="text-sm-center clearfix">
-        <button type="button"
+        <button type="submit"
                 class="swissid-btn swissid-btn-primary swissid-btn-connect"
         >
             <span class="connect" aria-hidden="true"></span>
