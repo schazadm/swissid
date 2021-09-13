@@ -69,7 +69,9 @@ class Swissid extends Module
      */
     public function getContent()
     {
-        Tools::redirectAdmin($this->context->link->getAdminLink(static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER));
+        $route = $this->context->link->getAdminLink(static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER);
+        // $route = $this->getModuleContainer()->get('router')->generate('swissid_admin_configruation');
+        Tools::redirectAdmin($route);
     }
 
     /**
@@ -110,7 +112,7 @@ class Swissid extends Module
      */
     public function hookHeader()
     {
-         $this->context->controller->addJS($this->_path . '/views/js/swissid-front.js');
+        $this->context->controller->addJS($this->_path . '/views/js/swissid-front.js');
         $this->context->controller->addCSS($this->_path . '/views/css/swissid-front.css');
         $this->context->controller->addCSS($this->_path . '/views/css/sesam-buttons.css');
     }
@@ -146,7 +148,7 @@ class Swissid extends Module
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => '/',
+                'login_url' => $this->context->link->getModuleLink($this->name, 'login', [], true),
                 'img_dir_url' => $this->_path . 'views/img'
             ]
         );
