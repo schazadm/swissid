@@ -19,7 +19,8 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
-            'info_tpl' => $this->module->getLocalPath() . 'views/templates/admin/info.tpl'
+            'info_tpl' => $this->module->getLocalPath() . 'views/templates/admin/info.tpl',
+            'redirect_url' => $this->context->link->getModuleLink($this->module->name, 'redirect', [], true)
         ]);
 
         parent::init();
