@@ -83,7 +83,7 @@ button, input, optgroup, select, textarea {
     top: 0;
     width: 50px;
     height: 50px;
-    background: url(../images/connect.svg) no-repeat,
+    background: url(../img/connect.svg) no-repeat,
     linear-gradient(transparent, transparent);
 }
 
