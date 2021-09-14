@@ -22,6 +22,13 @@
 
         <div class="row">
             <div class="col-xs-12">
+                <b>{l s='Redirect-URL:' mod='swissid'}</b>
+                <pre>{$redirect_url}</pre>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xs-12">
                 <h4>{l s='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor' mod='swissid'}</h4>
                 <ul class="ul-spaced">
                     <li><strong>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</strong></li>
