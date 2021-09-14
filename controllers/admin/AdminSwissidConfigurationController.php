@@ -2,6 +2,11 @@
 
 use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
 
+/**
+ * Class AdminSwissidConfigurationController
+ *
+ * Handles the view and the form of the module configuration page
+ */
 class AdminSwissidConfigurationController extends ModuleAdminController
 {
     /**
@@ -15,6 +20,9 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         parent::__construct();
     }
 
+    /**
+     * Initialises and assignees variables to the smarty template
+     */
     public function init()
     {
         $this->context->smarty->assign([
@@ -31,6 +39,9 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     }
 
     /**
+     * Defines the fields that can be adjusted based on the merchant.
+     * Based on the configuration a connection SwissID is possible.
+     *
      * @return string
      */
     public function initOptions()
@@ -77,6 +88,11 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         return $this->renderOptions();
     }
 
+    /**
+     * Defines and adds CSS & Js files. It also adds variables to Js
+     *
+     * @param bool $isNewTheme
+     */
     public function setMedia($isNewTheme = false)
     {
         parent::setMedia($isNewTheme);

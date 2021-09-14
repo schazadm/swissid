@@ -1,8 +1,17 @@
 <?php
 
-
+/**
+ * Class AdminSwissidCustomerController
+ *
+ * Handles the list and the form of the SwissID customers
+ */
 class AdminSwissidCustomerController extends ModuleAdminController
 {
+    /**
+     * AdminSwissidCustomerController constructor.
+     *
+     * @throws PrestaShopException
+     */
     public function __construct()
     {
         $this->bootstrap = true;
@@ -25,6 +34,11 @@ class AdminSwissidCustomerController extends ModuleAdminController
         $this->initForm();
     }
 
+    /**
+     * Defines and adds the CSS & Js files
+     *
+     * @param bool $isNewTheme
+     */
     public function setMedia($isNewTheme = false)
     {
         parent::setMedia($isNewTheme);
@@ -32,6 +46,9 @@ class AdminSwissidCustomerController extends ModuleAdminController
         $this->addJS($this->module->getPathUri() . 'views/js/swissid-back.js');
     }
 
+    /**
+     * Creates a database query and defines the list fields that will be shown
+     */
     private function initList()
     {
         $this->_select .= 'a.*, ';
@@ -84,6 +101,9 @@ class AdminSwissidCustomerController extends ModuleAdminController
         ];
     }
 
+    /**
+     * Defines the form if an entry is being added or edited
+     */
     private function initForm()
     {
         try {
@@ -142,6 +162,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
      * @param bool|null $onlyActive Returns only active customers when `true`
      *
      * @return array Customers
+     *
      * @throws PrestaShopDatabaseException
      */
     private function getCustomers($onlyActive = null)
