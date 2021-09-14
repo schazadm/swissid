@@ -1,23 +1,14 @@
-<style type="text/css">
-    .swissid-btn-connect span {
-        background: url({$img_dir_url}/connect.svg) no-repeat, linear-gradient(transparent, transparent);
-    }
-</style>
-
-<div class="help-block">
-    <ul>
-        {if $error_msg}
-            <li class="alert alert-danger">{$error_msg|nl2br nofilter}</li>
-        {/if}
-        {if $warning_msg}
-            <li class="alert alert-warning">{$warning_msg|nl2br nofilter}</li>
-        {/if}
-        {if $info_msg}
-            <li class="alert alert-info">{$info_msg|nl2br nofilter}</li>
-        {/if}
-    </ul>
+<div class="bootstrap">
+    {if $error_msg}
+        <div class="alert alert-danger">{$error_msg|nl2br nofilter}</div>
+    {/if}
+    {if $warning_msg}
+        <div class="alert alert-warning">{$warning_msg|nl2br nofilter}</div>
+    {/if}
+    {if $info_msg}
+        <div class="alert alert-info">{$info_msg|nl2br nofilter}</div>
+    {/if}
 </div>
-
 
 <form id="swissid-form" method="POST" target="_self" action="{$login_url}">
     <div id="swissid-content-login" class="text-sm-center clearfix">
