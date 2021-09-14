@@ -1,6 +1,5 @@
 <?php
 
-
 class SwissidCustomer extends ObjectModel
 {
     /**
@@ -9,7 +8,7 @@ class SwissidCustomer extends ObjectModel
     public $id_customer;
 
     /**
-     * @var int Customer age verification over +18
+     * @var int Customer age verification over 18+
      */
     public $age_over;
 
