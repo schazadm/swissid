@@ -7,11 +7,23 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+/**
+ * Class Swissid
+ *
+ * Is the main class of the module.
+ * Defines the main arguments and handles the redirection to the configuration page.
+ * Handles the hook registrations and handles if the hooks are triggered.
+ */
 class Swissid extends Module
 {
     const ADMIN_SWISSID_PARENT_CONTROLLER = 'AdminSwissidParent';
     const ADMIN_SWISSID_CONFIGURATION_CONTROLLER = 'AdminSwissidConfiguration';
     const ADMIN_SWISSID_CUSTOMER_CONTROLLER = 'AdminSwissidCustomer';
+
+    private $errorMsg;
+    private $warningMsg;
+    private $infoMsg;
+    private $successMsg;
 
     public function __construct()
     {
@@ -27,6 +39,8 @@ class Swissid extends Module
         $this->description = $this->l('Log in easily and securely with SwissID.');
         $this->confirmUninstall = $this->l('Are you sure about removing the registered clients?');
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
+
+        $this->fillMessages();
     }
 
     public function install()
@@ -95,12 +109,12 @@ class Swissid extends Module
                 'visible' => 'false'
             ],
             [
-                'name' => 'Configuration',
+                'name' => $this->trans('Configuration', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER
             ],
             [
-                'name' => 'Customer',
+                'name' => 'SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
             ]
@@ -122,7 +136,26 @@ class Swissid extends Module
      */
     public function hookDisplayCustomerAccount()
     {
-        echo 'hookDisplayCustomerAccount';
+        $action = 'connect';
+        $linked = false;
+        if (isset($this->context->customer)) {
+            if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
+                $action = 'disconnect';
+                $linked = true;
+            }
+        }
+
+        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
+            [
+                'link' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => $action], true),
+                'img_dir_url' => $this->_path . 'views/img',
+                'linked' => $linked,
+                'error_msg' => $this->errorMsg,
+                'warning_msg' => $this->warningMsg,
+                'info_msg' => $this->infoMsg,
+                'success_msg' => $this->successMsg,
+            ]
+        );
     }
 
     /**
@@ -148,9 +181,32 @@ class Swissid extends Module
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'login', [], true),
-                'img_dir_url' => $this->_path . 'views/img'
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'img_dir_url' => $this->_path . 'views/img',
+                'error_msg' => $this->errorMsg,
+                'warning_msg' => $this->warningMsg,
+                'info_msg' => $this->infoMsg,
             ]
         );
+    }
+
+    private function fillMessages()
+    {
+        if (isset($this->context->cookie->redirect_error)) {
+            $this->errorMsg = $this->context->cookie->redirect_error;
+            unset($this->context->cookie->redirect_error);
+        }
+        if (isset($this->context->cookie->redirect_warning)) {
+            $this->warningMsg = $this->context->cookie->redirect_warning;
+            unset($this->context->cookie->redirect_warning);
+        }
+        if (isset($this->context->cookie->redirect_info)) {
+            $this->infoMsg = $this->context->cookie->redirect_info;
+            unset($this->context->cookie->redirect_info);
+        }
+        if (isset($this->context->cookie->redirect_success)) {
+            $this->successMsg = $this->context->cookie->redirect_success;
+            unset($this->context->cookie->redirect_success);
+        }
     }
 }
