@@ -14,6 +14,7 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
      * @return bool|void Either redirects to the customer main view or the request origin
      *
      * @throws PrestaShopException
+     * @throws Exception
      */
     public function display()
     {
@@ -65,25 +66,68 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
             if (!Customer::customerExists($mail)) {
                 // if the customer doesn't exist -> create
                 // TODO: create
+                $this->createCustomer();
                 return false;
             }
             // create a customer object
-            $customer = new Customer();
-            // fill an instance of a customer
-            $authentication = $customer->getByEmail(trim($mail));
+            $customer = (new Customer())->getByEmail(trim($mail));
             // check whether the customer is already linked in the swissid table
-            if (SwissidCustomer::isCustomerLinkedById($authentication->id)) {
-                // if linked -> login via the updateCustomer() function
-                $this->context->updateCustomer($authentication);
+            if (SwissidCustomer::isCustomerLinkedById($customer->id)) {
+                // if linked -> login
+                $this->loginCustomer($customer);
             } else {
                 // if not -> ask customer to login with existing account and link the account
-                $infoMessage = $this->module->l('A customer account with the specified email address');
-                $infoMessage .= ' (' . $mail . ') ';
-                $infoMessage .= $this->module->l('already exists.') . ' ';
-                $infoMessage .= $this->module->l('Please try to log in to your local account and then link your account to your SwissID account.');
-                $this->context->cookie->__set('redirect_info', $this->module->l($infoMessage, 'SwissidAuthentication'));
+                $this->promptCustomer($mail);
             }
         } catch (Exception | PrestaShopException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Updates the customer in the context of the shop
+     *
+     * @param Customer $customer
+     *
+     * @return bool
+     */
+    private function loginCustomer(Customer $customer)
+    {
+        try {
+            $this->context->updateCustomer($customer);
+        } catch (Exception | PrestaShopException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Creates a {@link  Customer} based on the given arguments
+     */
+    private function createCustomer()
+    {
+        // TODO: create
+        // TODO: and loginCustomer(createdCustomer);
+    }
+
+    /**
+     * Prepares an information message for the customer and sets a cookie
+     *
+     * @param string $mail
+     *
+     * @return bool
+     */
+    private function promptCustomer(string $mail)
+    {
+        $infoMessage = $this->module->l('A customer account with the specified email address');
+        $infoMessage .= ' (' . $mail . ') ';
+        $infoMessage .= $this->module->l('already exists.') . ' ';
+        $infoMessage .= $this->module->l('Please try to log in to your local account and then link your account to your SwissID account.');
+
+        try {
+            $this->context->cookie->__set('redirect_info', $this->module->l($infoMessage, 'SwissidAuthentication'));
+        } catch (Exception $e) {
             return false;
         }
         return true;
