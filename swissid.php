@@ -45,12 +45,12 @@ class Swissid extends Module
 
     public function install()
     {
+        // install database tables
         include(dirname(__FILE__) . '/sql/install.php');
-
         if (!parent::install()) {
             return false;
         }
-
+        // define hooks that needs to be registered
         $hooks = [
             'header',
             'backOfficeHeader',
@@ -59,22 +59,28 @@ class Swissid extends Module
             'displayCustomerAccountFormTop',
             'displayCustomerLoginFormAfter',
         ];
-
+        // register hooks
         if (!$this->registerHook($hooks)) {
             return false;
         }
-
+        // install configuration values
+        if (!$this->installConfigValues()) {
+            return false;
+        }
         return true;
     }
 
     public function uninstall()
     {
+        // remove installed database tables
         include(dirname(__FILE__) . '/sql/uninstall.php');
-
         if (!parent::uninstall()) {
             return false;
         }
-
+        // remove configuration values
+        if (!$this->uninstallConfigValues()) {
+            return false;
+        }
         return true;
     }
 
@@ -119,6 +125,68 @@ class Swissid extends Module
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
             ]
         ];
+    }
+
+    /**
+     * Retrieves cookie messages and fills the local message variables
+     */
+    private function fillMessages()
+    {
+        if (isset($this->context->cookie->redirect_error)) {
+            $this->errorMsg = $this->context->cookie->redirect_error;
+            unset($this->context->cookie->redirect_error);
+        }
+        if (isset($this->context->cookie->redirect_warning)) {
+            $this->warningMsg = $this->context->cookie->redirect_warning;
+            unset($this->context->cookie->redirect_warning);
+        }
+        if (isset($this->context->cookie->redirect_info)) {
+            $this->infoMsg = $this->context->cookie->redirect_info;
+            unset($this->context->cookie->redirect_info);
+        }
+        if (isset($this->context->cookie->redirect_success)) {
+            $this->successMsg = $this->context->cookie->redirect_success;
+            unset($this->context->cookie->redirect_success);
+        }
+    }
+
+    /**
+     * Defines and sets configuration values
+     *
+     * @return bool
+     */
+    private function installConfigValues()
+    {
+        try {
+            // define the redirect URL which is used to authenticate the end-user
+            Configuration::updateValue('SWISSID_REDIRECT_URL', $this->context->link->getBaseLink() . 'module/' . $this->name . '/redirect');
+            Configuration::updateValue('SWISSID_CLIENT_ID', '');
+            Configuration::updateValue('SWISSID_CLIENT_SECRET', '');
+            Configuration::updateValue('SWISSID_AGE_VERIFICATION', '');
+            Configuration::updateValue('SWISSID_AGE_VERIFICATION_OPTIONAL', '');
+        } catch (Exception | PrestaShopException $e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Removes configuration values
+     *
+     * @return bool
+     */
+    private function uninstallConfigValues()
+    {
+        try {
+            Configuration::deleteByName('SWISSID_REDIRECT_URL');
+            Configuration::deleteByName('SWISSID_CLIENT_ID');
+            Configuration::deleteByName('SWISSID_CLIENT_SECRET');
+            Configuration::deleteByName('SWISSID_AGE_VERIFICATION');
+            Configuration::deleteByName('SWISSID_AGE_VERIFICATION_OPTIONAL');
+        } catch (Exception | PrestaShopException $e) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -188,25 +256,5 @@ class Swissid extends Module
                 'info_msg' => $this->infoMsg,
             ]
         );
-    }
-
-    private function fillMessages()
-    {
-        if (isset($this->context->cookie->redirect_error)) {
-            $this->errorMsg = $this->context->cookie->redirect_error;
-            unset($this->context->cookie->redirect_error);
-        }
-        if (isset($this->context->cookie->redirect_warning)) {
-            $this->warningMsg = $this->context->cookie->redirect_warning;
-            unset($this->context->cookie->redirect_warning);
-        }
-        if (isset($this->context->cookie->redirect_info)) {
-            $this->infoMsg = $this->context->cookie->redirect_info;
-            unset($this->context->cookie->redirect_info);
-        }
-        if (isset($this->context->cookie->redirect_success)) {
-            $this->successMsg = $this->context->cookie->redirect_success;
-            unset($this->context->cookie->redirect_success);
-        }
     }
 }
