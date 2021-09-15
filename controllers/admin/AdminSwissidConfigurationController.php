@@ -1,7 +1,5 @@
 <?php
 
-use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
-
 /**
  * Class AdminSwissidConfigurationController
  *
@@ -9,6 +7,8 @@ use PrestaShop\PrestaShop\Core\Exception\ContainerNotFoundException;
  */
 class AdminSwissidConfigurationController extends ModuleAdminController
 {
+    private $redirectUrl;
+
     /**
      * AdminSwissidConfigurationController constructor.
      *
@@ -18,6 +18,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         $this->bootstrap = true;
         parent::__construct();
+        $this->redirectUrl = Configuration::get('SWISSID_REDIRECT_URL');
     }
 
     /**
@@ -28,7 +29,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'info_tpl' => $this->module->getLocalPath() . 'views/templates/admin/info.tpl',
-            'redirect_url' => $this->context->link->getModuleLink($this->module->name, 'redirect', [], true)
+            'redirect_url' => $this->redirectUrl,
         ]);
 
         parent::init();
