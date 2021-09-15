@@ -11,6 +11,8 @@ require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
  */
 class SwissidRedirectModuleFrontController extends ModuleFrontController
 {
+    /** @var bool If set to true, will be redirected to authentication page */
+    public $auth = false;
     /** @var string RP identifier */
     private $clientID;
     /** @var string RP secret */
@@ -28,6 +30,9 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     public function __construct()
     {
         parent::__construct();
+        if (!$this->checkConfigValues()) {
+            Tools::displayError("Parameters are insufficient. Check configuration values again.");
+        }
         // get the configuration
         $configValues = $this->getConfigValues();
         // define the configuration values
@@ -35,20 +40,38 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->clientSecret = $configValues['SWISSID_CLIENT_SECRET'];
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
         $this->environment = 'INT';
+    }
+
+    public function init()
+    {
+        parent::init();
         // instantiate the SwissIDConnector object with the RP-specific configuration
-        /*
         $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
         if ($this->swissIDConnector->hasError()) {
             // handle the object's error if instantiating the object failed
             $error = $this->swissIDConnector->getError();
             $this->showErrors($error);
         }
-        */
     }
 
-    public function display()
+    /**
+     * GET entry of the controller
+     */
+    public function initContent()
     {
-        echo 'swissid redirect front controller';
+        parent::initContent();
+
+        //TODO: redirect to wherever
+    }
+
+    /**
+     * POST entry of the controller
+     */
+    public function postProcess()
+    {
+        parent::postProcess();
+
+        //TODO: retrieve received data
     }
 
     /**
@@ -189,10 +212,28 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         ];
     }
 
+    /**
+     * Checks whether the required config values are sufficient
+     *
+     * @return bool
+     */
+    private function checkConfigValues()
+    {
+        $configValues = $this->getConfigValues();
+        if (empty($configValues['SWISSID_REDIRECT_URL'])) {
+            return false;
+        } elseif (empty($configValues['SWISSID_CLIENT_ID'])) {
+            return false;
+        } elseif (empty($configValues['SWISSID_CLIENT_SECRET'])) {
+            return false;
+        }
+        return true;
+    }
+
     private function showErrors(array $errors)
     {
-        foreach ($errors as $error) {
-            var_dump($error);
+        if (_PS_MODE_DEV_) {
+            var_dump($errors);
         }
     }
 }

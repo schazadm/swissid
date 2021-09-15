@@ -8,7 +8,7 @@
 class SwissidAuthenticationModuleFrontController extends ModuleFrontController
 {
     /**
-     * First entry of the controller
+     * GET entry of the controller
      * This method switches accordingly by the given action parameter
      *
      * @return bool|void Either redirects to the customer main view or the request origin
@@ -16,7 +16,7 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
      * @throws PrestaShopException
      * @throws Exception
      */
-    public function display()
+    public function initContent()
     {
         if ($action = Tools::getValue('action')) {
             switch ($action) {
@@ -50,6 +50,14 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
         Tools::redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : die(Tools::displayError()));
 
         return true;
+    }
+
+    /**
+     * POST entry of the controller
+     */
+    public function postProcess()
+    {
+        parent::postProcess();
     }
 
     /**
