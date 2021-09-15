@@ -58,6 +58,7 @@ class Swissid extends Module
             'displayCustomerAccountForm',
             'displayCustomerAccountFormTop',
             'displayCustomerLoginFormAfter',
+            'displayPersonalInformationTop',
         ];
         // register hooks
         if (!$this->registerHook($hooks)) {
@@ -231,7 +232,7 @@ class Swissid extends Module
      */
     public function hookDisplayCustomerAccountForm()
     {
-        echo 'hookDisplayCustomerAccountForm';
+        //TODO: delete...not needed
     }
 
     /**
@@ -239,13 +240,42 @@ class Swissid extends Module
      */
     public function hookDisplayCustomerAccountFormTop()
     {
-        echo 'hookDisplayCustomerAccountFormTop';
+        $linked = false;
+        if (isset($this->context->customer)) {
+            if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
+                $linked = true;
+            }
+        }
+
+        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
+            [
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'img_dir_url' => $this->_path . 'views/img',
+                'linked' => $linked,
+                'error_msg' => $this->errorMsg,
+                'warning_msg' => $this->warningMsg,
+                'info_msg' => $this->infoMsg,
+            ]
+        );
     }
 
     /**
      * hook is displayed on the page 'login' after form
      */
     public function hookDisplayCustomerLoginFormAfter()
+    {
+        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
+            [
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'img_dir_url' => $this->_path . 'views/img',
+                'error_msg' => $this->errorMsg,
+                'warning_msg' => $this->warningMsg,
+                'info_msg' => $this->infoMsg,
+            ]
+        );
+    }
+
+    public function hookDisplayPersonalInformationTop()
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [

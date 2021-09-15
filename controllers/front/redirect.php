@@ -46,7 +46,11 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     {
         parent::init();
         // instantiate the SwissIDConnector object with the RP-specific configuration
-        $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
+        try {
+            $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
+        } catch (Exception | PrestaShopException $e) {
+            Tools::redirect($this->context->link->getBaseLink());
+        }
         if ($this->swissIDConnector->hasError()) {
             // handle the object's error if instantiating the object failed
             $error = $this->swissIDConnector->getError();
