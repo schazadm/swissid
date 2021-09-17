@@ -1,23 +1,24 @@
 <style type="text/css">
-    .swissid-btn {
+    .swissid-myAccountBlock.swissid-btn {
         display: inline-block;
     }
 
-    .swissid-btn-mini {
+    .swissid-myAccountBlock.swissid-btn-mini {
         width: 38px;
     }
 
-    .swissid-btn-connect {
+    .swissid-myAccountBlock.swissid-btn-connect {
         height: 38px;
     }
 
-    .swissid-btn-connect span {
+    .swissid-myAccountBlock.swissid-btn-connect span {
         background: url({$img_dir_url}/connect_40x40.svg) no-repeat, linear-gradient(transparent, transparent);
         width: 40px;
         height: 40px;
     }
 </style>
 
+{* BLOCK SWISSID CONNECT - DISCONNECT *}
 <a class="col-lg-4 col-md-6 col-sm-6 col-xs-12 text-sm-center"
    id="swissid-link"
    href="{$link}"
@@ -45,7 +46,7 @@
         </div>
 
         <i class="material-icons">
-            <span class="swissid-btn swissid-btn-primary swissid-btn-connect swissid-btn-mini swissid-btn-connect-black">
+            <span class="swissid-myAccountBlock swissid-btn swissid-btn-primary swissid-btn-connect swissid-btn-mini swissid-btn-connect-black">
                 <span class="connect" aria-hidden="true"></span>
             </span>
         </i>
@@ -57,3 +58,26 @@
         {/if}
     </span>
 </a>
+
+{* BLOCK - SWISSID AGE VERFICATION *}
+{if isset($age_verification) && $age_verification}
+    {if isset($age_verification_optional) && !$age_verification_optional}
+        <a class="col-lg-4 col-md-6 col-sm-6 col-xs-12 text-sm-center"
+           id="swissid-age"
+           href="#"
+           data-toggle="modal"
+           data-target="#ageVerificationModal"
+        >
+            <span class="link-item">
+                <i class="material-icons">
+                    <span class="swissid-myAccountBlock swissid-btn swissid-btn-primary swissid-btn-connect swissid-btn-mini swissid-btn-connect-black">
+                        <span class="connect" aria-hidden="true"></span>
+                    </span>
+                </i>
+                {l s='Verify your age with the help of SwissID' mod='swissid'}
+                <br/>
+            </span>
+        </a>
+        {include file="./swissid-age-verification-modal.tpl"}
+    {/if}
+{/if}
