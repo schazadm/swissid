@@ -1,3 +1,7 @@
 #swissid-content-login {
     padding: 1rem 0;
 }
+
+.page-my-account #content .links a:hover span.swissid-btn.swissid-btn-connect-black {
+    background-color: #eb0000;
+}
