@@ -73,6 +73,8 @@ class Swissid extends Module
 
     public function uninstall()
     {
+        //TODO: how to remove the data table safely...dump? or something else
+
         // remove installed database tables
         include(dirname(__FILE__) . '/sql/uninstall.php');
         if (!parent::uninstall()) {
@@ -205,6 +207,9 @@ class Swissid extends Module
      */
     public function hookDisplayCustomerAccount()
     {
+        // TODO: Separate table for 'Age verification text' and also by doing that move configuration there
+        $ageVerificationText = $this->l('With the introduction of the new federal law on tobacco products and electronic cigarettes in switzerland, the age of consumers must now be checked. this is done in our online shop with the help of swissid. you have your identity checked once and you can afterwards save it in your account.');
+
         $action = 'connect';
         $linked = false;
         if (isset($this->context->customer)) {
@@ -216,9 +221,13 @@ class Swissid extends Module
 
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
             [
-                'link' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => $action], true),
+                'link' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => $action], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
+                'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
+                'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
+                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
+                'age_verification_text' => $ageVerificationText,
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
                 'info_msg' => $this->infoMsg,
@@ -249,7 +258,7 @@ class Swissid extends Module
 
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
                 'error_msg' => $this->errorMsg,
@@ -266,7 +275,7 @@ class Swissid extends Module
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
@@ -279,7 +288,7 @@ class Swissid extends Module
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authentication', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
