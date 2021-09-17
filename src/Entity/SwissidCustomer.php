@@ -37,7 +37,7 @@ class SwissidCustomer extends ObjectModel
      *
      * @return bool
      */
-    public static function isCustomerLinkedById($customer_id)
+    public static function isCustomerLinkedById(int $customer_id)
     {
         try {
             $sql = new DbQuery();
@@ -46,6 +46,37 @@ class SwissidCustomer extends ObjectModel
             $sql->where('sc.id_customer = ' . (int)$customer_id);
             $result = Db::getInstance()->getValue($sql);
             return (bool)$result;
+        } catch (PrestaShopException $exception) {
+            return false;
+        }
+    }
+
+    public static function addSwissidCustomer(int $customer_id)
+    {
+        try {
+            $sql = '
+            INSERT INTO `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] . '` (`id_customer`)
+            VALUES (' . (int)$customer_id . ')';
+            return Db::getInstance()->execute($sql);
+        } catch (PrestaShopException $exception) {
+            return false;
+        }
+    }
+
+    /**
+     * Deletes an entry based on the given customer id
+     *
+     * @param int $customer_id
+     *
+     * @return bool
+     */
+    public static function removeSwissidCustomerByCustomerId(int $customer_id)
+    {
+        try {
+            $sql = '
+            DELETE FROM `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] . '`
+            WHERE `id_customer` = "' . (int)$customer_id . '"';
+            return Db::getInstance()->execute($sql);
         } catch (PrestaShopException $exception) {
             return false;
         }

@@ -5,7 +5,7 @@
  *
  * Handles the authentication of a SwissID customer
  */
-class SwissidAuthenticationModuleFrontController extends ModuleFrontController
+class SwissidAuthenticateModuleFrontController extends ModuleFrontController
 {
     /**
      * GET entry of the controller
@@ -22,6 +22,7 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
             switch ($action) {
                 case 'login':
                     // TODO: retrieve email by Tools::getValue()
+                    // TODO: also check mail validity
                     $mail = 'osr.dev@outlook.com';
                     // authenticate with the given mail address
                     if (!$this->authenticateCustomer($mail)) {
@@ -34,12 +35,18 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
                     echo 'swissid logout call';
                     break;
                 case 'connect':
-                    // TODO: connect
-                    $this->context->cookie->__set('redirect_success', $this->module->l('Successfully connected to your SwissID'));
+                    if ($this->connectCustomer()) {
+                        $this->context->cookie->__set('redirect_success', $this->module->l('Successfully connected to your SwissID'));
+                    } else {
+                        $this->context->cookie->__set('redirect_error', $this->module->l('An error occurred while connecting your SwissID account to your local account. Please try again.'));
+                    }
                     break;
                 case 'disconnect':
-                    // TODO: disconnect
-                    $this->context->cookie->__set('redirect_success', $this->module->l('Successfully disconnected from your SwissID'));
+                    if ($this->disconnectCustomer()) {
+                        $this->context->cookie->__set('redirect_success', $this->module->l('Successfully disconnected from your SwissID'));
+                    } else {
+                        $this->context->cookie->__set('redirect_error', $this->module->l('An error occurred while disconnecting your SwissID account from your local account. Please try again.'));
+                    }
                     break;
                 default:
                     break;
@@ -139,6 +146,24 @@ class SwissidAuthenticationModuleFrontController extends ModuleFrontController
             return false;
         }
         return true;
+    }
+
+    private function connectCustomer()
+    {
+        if (!isset($this->context->customer)) {
+            return false;
+        }
+
+        return SwissidCustomer::addSwissidCustomer($this->context->customer->id);
+    }
+
+    private function disconnectCustomer()
+    {
+        if (!isset($this->context->customer)) {
+            return false;
+        }
+
+        return SwissidCustomer::removeSwissidCustomerByCustomerId($this->context->customer->id);
     }
 
     private function cookieMessages()
