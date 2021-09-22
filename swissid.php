@@ -25,6 +25,9 @@ class Swissid extends Module
     private $infoMsg;
     private $successMsg;
 
+    // TODO: remove after db table is done
+    private $ageVerificationText;
+
     public function __construct()
     {
         $this->name = 'swissid';
@@ -41,6 +44,9 @@ class Swissid extends Module
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
 
         $this->fillMessages();
+
+        // TODO: Separate table for 'Age verification text' and also by doing that move configuration there
+        $this->ageVerificationText = $this->l('With the introduction of the new federal law on tobacco products and electronic cigarettes in switzerland, the age of consumers must now be checked. this is done in our online shop with the help of swissid. you have your identity checked once and you can afterwards save it in your account.');
     }
 
     public function install()
@@ -53,6 +59,7 @@ class Swissid extends Module
         // define hooks that needs to be registered
         $hooks = [
             'header',
+            'displayHeader',
             'backOfficeHeader',
             'displayCustomerAccount',
             'displayCustomerAccountForm',
@@ -193,29 +200,72 @@ class Swissid extends Module
     }
 
     /**
-     * Add the CSS & JavaScript files you want to be added on the FO.
+     * @return string|null
+     * @throws Exception
      */
-    public function hookHeader()
+    public function hookDisplayHeader()
     {
         $this->context->controller->addJS($this->_path . '/views/js/swissid-front.js');
         $this->context->controller->addCSS($this->_path . '/views/css/swissid-front.css');
         $this->context->controller->addCSS($this->_path . '/views/css/sesam-buttons.css');
+
+        if (isset($this->context->customer->id)
+            && Tools::getValue('controller') == 'order'
+            && Configuration::get('SWISSID_AGE_VERIFICATION')
+            && SwissidCustomer::isCustomerLinkedById($this->context->customer->id)
+            && !SwissidCustomer::isCustomerAgeOver($this->context->customer->id)
+        ) {
+            if (!isset($this->context->cookie->swissid_verify_asked)) {
+                $this->context->cookie->__set('swissid_verify_asked', true);
+                return $this->getAgeVerifyModal();
+            } else {
+                if (!Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL')) {
+                    return $this->getAgeVerifyModal();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return string
+     */
+    private function getAgeVerifyModal()
+    {
+        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-age-verification-modal.tpl',
+            [
+                'show' => true,
+                'img_dir_url' => $this->_path . 'views/img',
+                'linked' => true,
+                'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
+                'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
+                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
+                'age_verification_text' => $this->ageVerificationText,
+                'error_msg' => $this->errorMsg,
+                'warning_msg' => $this->warningMsg,
+                'info_msg' => $this->infoMsg,
+                'success_msg' => $this->successMsg,
+            ]
+        );
     }
 
     /**
      * hook is displayed on the page 'my-account'
+     *
+     * @return string
      */
     public function hookDisplayCustomerAccount()
     {
-        // TODO: Separate table for 'Age verification text' and also by doing that move configuration there
-        $ageVerificationText = $this->l('With the introduction of the new federal law on tobacco products and electronic cigarettes in switzerland, the age of consumers must now be checked. this is done in our online shop with the help of swissid. you have your identity checked once and you can afterwards save it in your account.');
-
         $action = 'connect';
         $linked = false;
-        if (isset($this->context->customer)) {
+        $age_over = false;
+        if (isset($this->context->customer->id)) {
             if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
                 $action = 'disconnect';
                 $linked = true;
+            }
+            if (SwissidCustomer::isCustomerAgeOver($this->context->customer->id)) {
+                $age_over = true;
             }
         }
 
@@ -224,10 +274,11 @@ class Swissid extends Module
                 'link' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => $action], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
+                'age_over' => $age_over,
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
                 'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
-                'age_verification_text' => $ageVerificationText,
+                'age_verification_text' => $this->ageVerificationText,
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
                 'info_msg' => $this->infoMsg,
@@ -246,11 +297,13 @@ class Swissid extends Module
 
     /**
      * hook is displayed on the page 'login' on the create form page
+     *
+     * @return string
      */
     public function hookDisplayCustomerAccountFormTop()
     {
         $linked = false;
-        if (isset($this->context->customer)) {
+        if (isset($this->context->customer->id)) {
             if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
                 $linked = true;
             }
@@ -270,6 +323,8 @@ class Swissid extends Module
 
     /**
      * hook is displayed on the page 'login' after form
+     *
+     * @return string
      */
     public function hookDisplayCustomerLoginFormAfter()
     {
@@ -284,8 +339,19 @@ class Swissid extends Module
         );
     }
 
+    /**
+     * hook is displayed on the page 'order'
+     *
+     * @return string|null
+     */
     public function hookDisplayPersonalInformationTop()
     {
+        if (isset($this->context->customer->id)) {
+            if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
+                return null;
+            }
+        }
+
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
                 'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),

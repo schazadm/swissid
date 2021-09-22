@@ -40,16 +40,19 @@
     }
 </style>
 
-<div class="modal fade" id="ageVerificationModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="ageVerificationModal" tabindex="-1" role="dialog"
+     aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">
                     {l s='Verify your Age with the help of SwissID' mod='swissid'}
                 </h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true"><i class="material-icons">close</i></span>
-                </button>
+                {if !isset($show)}
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="material-icons">close</i></span>
+                    </button>
+                {/if}
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -81,3 +84,20 @@
         </div>
     </div>
 </div>
+
+{if isset($show)}
+    <script type="application/javascript">
+        var waitForJQuery = setInterval(function () {
+            if (typeof $ != 'undefined') {
+                $(document).ready(function () {
+                    $('#ageVerificationModal').modal({
+                        show: true,
+                        keyboard: false,
+                        backdrop: 'static'
+                    });
+                });
+                clearInterval(waitForJQuery);
+            }
+        }, 10);
+    </script>
+{/if}

@@ -71,7 +71,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * Tries to authenticate a customer with the given email address
      *
      * @param string $mail A valid email address
-     *
      * @return bool Returns true if customer exists and is authenticated
      */
     private function authenticateCustomer($mail)
@@ -104,7 +103,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * Updates the customer in the context of the shop
      *
      * @param Customer $customer
-     *
      * @return bool
      */
     private function loginCustomer(Customer $customer)

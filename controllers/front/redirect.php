@@ -158,43 +158,37 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                             /**
                              * Handle the case in which the client_id was invalid
                              */
-                            ;
                             break;
                         case 'redirect_uri_mismatch':
                             /**
                              * Handle the case in which the redirect URI was invalid
                              */
-                            ;
                             break;
                         case 'general_error':
                             /**
                              * Handle the case of a general error
                              */
-                            ;
                             break;
                         case 'manual_check_needed':
                             /**
                              * Handle the end-user who is subject to a manual verification
                              */
-                            ;
                             break;
                         case 'cancelled_by_user':
                             /**
                              * Handle the end-user who cancelled the step-up
                              */
-                            ;
                             break;
                         case 'access_denied':
                             /**
                              * Handle the end-user who didn't give consent
                              */
-                            ;
                             break;
                     }
                 } elseif ($error['type'] == 'object') {
                     /**
                      * Handle the object's error if authentication failed
-                     */;
+                     */
                 }
             }
         }

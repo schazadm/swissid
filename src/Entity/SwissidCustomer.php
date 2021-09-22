@@ -34,7 +34,6 @@ class SwissidCustomer extends ObjectModel
      * Checks whether a customer with the given customer id exists in in the main table
      *
      * @param int $customer_id
-     *
      * @return bool
      */
     public static function isCustomerLinkedById(int $customer_id)
@@ -51,6 +50,33 @@ class SwissidCustomer extends ObjectModel
         }
     }
 
+    /**
+     * Checks whether a customer with the given customer id has the age_over set to 1
+     *
+     * @param int $customer_id
+     * @return bool
+     */
+    public static function isCustomerAgeOver(int $customer_id)
+    {
+        try {
+            $sql = new DbQuery();
+            $sql->select('sc.*');
+            $sql->from(SwissidCustomer::$definition['table'], 'sc');
+            $sql->where('sc.id_customer = ' . (int)$customer_id);
+            $sql->where('sc.age_over = 1');
+            $result = Db::getInstance()->getValue($sql);
+            return (bool)$result;
+        } catch (PrestaShopException $exception) {
+            return false;
+        }
+    }
+
+    /**
+     * Adds an entry with the given customer id
+     *
+     * @param int $customer_id
+     * @return bool
+     */
     public static function addSwissidCustomer(int $customer_id)
     {
         try {
@@ -67,7 +93,6 @@ class SwissidCustomer extends ObjectModel
      * Deletes an entry based on the given customer id
      *
      * @param int $customer_id
-     *
      * @return bool
      */
     public static function removeSwissidCustomerByCustomerId(int $customer_id)

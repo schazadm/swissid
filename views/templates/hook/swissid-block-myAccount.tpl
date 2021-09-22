@@ -22,11 +22,13 @@
 <a class="col-lg-4 col-md-6 col-sm-6 col-xs-12 text-sm-center"
    id="swissid-link"
    href="{$link}"
+   data-toggle="tooltip"
+   data-html="true"
+   data-placement="top"
         {if !$linked}
-            data-toggle="tooltip"
             title="{l s='If you connect your local customer account with your SwissID account, you can log in directly with SwissID.' mod='swissid'}"
-            data-html="true"
-            data-placement="top"
+        {else}
+            title="{l s='If you disconnect your local customer account from your SwissID, you can no longer log in directly with SwissID.' mod='swissid'}"
         {/if}
 >
     <span class="link-item">
@@ -52,22 +54,23 @@
         </i>
 
         {if $linked}
-            {l s='Disconnect your local account to your SwissID' mod='swissid'}
+            {l s='Disconnect your local account from your SwissID' mod='swissid'}
         {else}
-            {l s='Link your local account to your SwissID' mod='swissid'}
+            {l s='Connect your local account to your SwissID' mod='swissid'}
         {/if}
     </span>
 </a>
 
 {* BLOCK - SWISSID AGE VERFICATION *}
 {if isset($age_verification) && $age_verification}
-    {if isset($age_verification_optional) && !$age_verification_optional}
-        <a class="col-lg-4 col-md-6 col-sm-6 col-xs-12 text-sm-center"
-           id="swissid-age"
-           href="#"
-           data-toggle="modal"
-           data-target="#ageVerificationModal"
-        >
+    {if isset($age_over) && !$age_over}
+        {if isset($age_verification_optional) && !$age_verification_optional}
+            <a class="col-lg-4 col-md-6 col-sm-6 col-xs-12 text-sm-center"
+               id="swissid-age"
+               href="#"
+               data-toggle="modal"
+               data-target="#ageVerificationModal"
+            >
             <span class="link-item">
                 <i class="material-icons">
                     <span class="swissid-myAccountBlock swissid-btn swissid-btn-primary swissid-btn-connect swissid-btn-mini swissid-btn-connect-black">
@@ -77,7 +80,8 @@
                 {l s='Verify your age with the help of SwissID' mod='swissid'}
                 <br/>
             </span>
-        </a>
-        {include file="./swissid-age-verification-modal.tpl"}
+            </a>
+            {include file="./swissid-age-verification-modal.tpl"}
+        {/if}
     {/if}
 {/if}
