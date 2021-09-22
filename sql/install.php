@@ -27,7 +27,7 @@ $sql = [];
 
 $sql[] = 'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'swissid_customer` (
     `id_swissid_customer` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `id_customer` INT(10) UNSIGNED NOT NULL,
+    `id_customer` INT(10) UNSIGNED NOT NULL UNIQUE,
     `age_over` TINYINT(1) UNSIGNED DEFAULT 0,
     PRIMARY KEY  (`id_swissid_customer`),
     KEY `id_customer` (`id_customer`)
