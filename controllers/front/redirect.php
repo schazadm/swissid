@@ -39,7 +39,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->clientID = $configValues['SWISSID_CLIENT_ID'];
         $this->clientSecret = $configValues['SWISSID_CLIENT_SECRET'];
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
-        $this->environment = 'INT';
+        $this->environment = 'PRE';
     }
 
     public function init()

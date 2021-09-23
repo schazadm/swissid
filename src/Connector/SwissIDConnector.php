@@ -286,7 +286,7 @@ class SwissIDConnector
              * initialize the class member variables
              */
             $this->openidConfigurationEndpoints = array(
-                'INT' => 'https://login.int.swissid.ch/idp/oauth2/.well-known/openid-configuration',
+                'PRE' => 'https://login.sandbox.pre.swissid.ch/idp/oauth2/.well-known/openid-configuration',
                 'PROD' => 'https://login.swissid.ch/idp/oauth2/.well-known/openid-configuration'
             );
             $this->connectorInitialized = false;
