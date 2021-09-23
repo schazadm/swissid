@@ -19,7 +19,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private $clientSecret;
     /** @var string Redirect-URL for calls */
     private $redirectURL;
-    /** @var string INT|PROD */
+    /** @var string PRE|PROD */
     private $environment;
     /** @var SwissIDConnector connector */
     private $swissIDConnector;

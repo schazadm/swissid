@@ -234,7 +234,7 @@ class SwissIDConnector
      * @param string $clientID The RP's client_id
      * @param string $clientSecret The RP's client secret
      * @param string $redirectURI The RP's redirect URI registered with SwissID
-     * @param string $environment The environment for which to initialize this object. Valid values are 'INT', 'PROD'
+     * @param string $environment The environment for which to initialize this object. Valid values are 'PRE', 'PROD'
      * @param string $accessToken A previously obtained and securely stored access token
      * @param int $accessTokenExpirationTimestamp The expiration timestamp of a previously obtained and securely stored access token
      * @param string $refreshToken A previously obtained and securely stored refresh token
@@ -383,47 +383,13 @@ class SwissIDConnector
                         } else {
                             $this->keys = $keysDecoded;
 
-                            if (!$rs2 = json_decode($rs, $associativeP = true)) {
-                                /**
-                                 * If an error has occurred while trying to decode the JSON response,
-                                 * return an error
-                                 */
-                                $this->error = array(
-                                    'line' => __LINE__,
-                                    'type' => 'object',
-                                    'error' => json_last_error(),
-                                    'error_description' => json_last_error_msg()
-                                );
-                                return false;
-                            }
 
-                            /**
-                             * Store the access and refresh token, if provided
-                             */
-                            if (!is_null($accessToken)) {
-                                $this->accessToken = $accessToken;
-                                $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
-                            }
-                            if (!is_null($refreshToken)) {
-                                $this->refreshToken = $refreshToken;
-                            }
-                            return;
                         }
                     }
                 }
-                /**
-                 * If an unknown error has occurred,
-                 * return an error
-                 */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'An unknown has occured whilte trying to initialize this object'
-                );
-                return;
             }
         }
+        return;
     }
 
     /**
@@ -514,7 +480,7 @@ class SwissIDConnector
      * - alowedValues, the allowed values for the parameter specified
      *
      * @param string $type The type of parameter to verify. Valid values are 'environment', 'scope', 'qoa', 'qor', 'locale', 'login_hint', 'prompt', 'maxAge', 'tokenType'
-     * @param type $value the value to verify for the parameter specified
+     * @param string $value the value to verify for the parameter specified
      * @return array|null
      */
     private function verifyParameter(string $type, $value): ?array
@@ -535,7 +501,7 @@ class SwissIDConnector
 
         switch ($type) {
             case 'environment':
-                $allowedValues = array('INT', 'PROD');
+                $allowedValues = array('PRE', 'PROD');
                 return array(
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
@@ -1508,7 +1474,7 @@ class SwissIDConnector
             /**
              * Redirect
              */
-            $stepUpURI = ($this->environment == 'PROD') ? 'https://account.swissid.ch/idcheck/rp/stepup/lot1' : 'https://account.int.swissid.ch/idcheck/rp/stepup/lot1';
+            $stepUpURI = ($this->environment == 'PROD') ? 'https://account.swissid.ch/idcheck/rp/stepup/lot1' : 'https://account.sandbox.pre.swissid.ch/idcheck/rp/stepup/lot1';
             $redirectLocation = $stepUpURI . '?' . http_build_query($params2);
             header('Location: ' . $redirectLocation);
             exit;
