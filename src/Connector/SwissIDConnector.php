@@ -272,13 +272,6 @@ class SwissIDConnector
             foreach ($_SESSION[get_class($this)] as $key => $val) {
                 $this->$key = $val;
             }
-
-            /**
-             * Complete the authentication, if not already done
-             */
-            if (!$this->authenticated) {
-                $this->completeAuthentication();
-            }
         } elseif (!isset($_SESSION[get_class($this)])) {
             /**
              * If class members are not available from the session,
@@ -440,9 +433,9 @@ class SwissIDConnector
              */
             $this->error = array(
                 'line' => __LINE__,
-                'type' => 'object',
+                'type' => 'object - scope ' . $this->scope,
                 'error' => null,
-                'error_description' => 'Unexpected http status ' . $httpStatus
+                'error_description' => 'Unexpected http status ' . $httpStatus . ' - ' . $rs
             );
             return false;
         }
@@ -612,7 +605,7 @@ class SwissIDConnector
      *
      * If an error has occurred, this method returns false, otherwise true
      */
-    private function completeAuthentication(): bool
+    public function completeAuthentication(): bool
     {
 
         if (!$this->connectorInitialized) {
@@ -950,57 +943,51 @@ class SwissIDConnector
                 'error_description' => 'This object was not correctly initialized'
             );
             return;
-        } elseif (!$this->authenticationInitialized) {
-            /**
-             * If this object was correctly initialized,
-             * but the authentication was not initialized,
-             * try to initialize the authentication
-             */
-            $claims = (is_null($qor)) ? null : '{"userinfo":{"urn:swissid:qor":{"value":"' . $qor . '"}}}';
-            $params = array(
-                'response_type' => 'code',
-                'client_id' => $this->clientID,
-                'redirect_uri' => $this->redirectURI,
-                'nonce' => $nonce,
-                'state' => $state,
-                'ui_locales' => $locale,
-                'scope' => $scope,
-                'login_hint' => $loginHint,
-                'prompt' => $prompt,
-                'max_age' => $maxAge,
-                'claims' => $claims,
-                'acr_values' => $qoa
-            );
-            $params2 = array();
-            foreach ($params as $key => $val) {
-                if (!is_null($val)) {
-                    $params2[$key] = $val;
-                }
-            }
-
-            /**
-             * Mark the authentication as being initialized
-             */
-            $this->authenticationInitialized = true;
-
-            /**
-             * Store state of this object in the session
-             */
-            $_SESSION[get_class($this)] = get_object_vars($this);
-
-            /**
-             * Redirect
-             */
-            $redirectLocation = $this->openidConfiguration['authorization_endpoint'] . '?' . http_build_query($params2);
-            header('Location: ' . $redirectLocation);
-            exit;
-            return;
-        } else {
-            /**
-             * Return if there is nothing to do
-             */
-            return;
         }
+        /**
+         * If this object was correctly initialized,
+         * but the authentication was not initialized,
+         * try to initialize the authentication
+         */
+        $claims = (is_null($qor)) ? null : '{"userinfo":{"urn:swissid:qor":{"value":"' . $qor . '"}}}';
+        $params = array(
+            'response_type' => 'code',
+            'client_id' => $this->clientID,
+            'redirect_uri' => $this->redirectURI,
+            'nonce' => $nonce,
+            'state' => $state,
+            'ui_locales' => $locale,
+            'scope' => $scope,
+            'login_hint' => $loginHint,
+            'prompt' => $prompt,
+            'max_age' => $maxAge,
+            'claims' => $claims,
+            'acr_values' => $qoa
+        );
+        $params2 = array();
+        foreach ($params as $key => $val) {
+            if (!is_null($val)) {
+                $params2[$key] = $val;
+            }
+        }
+
+        /**
+         * Mark the authentication as being initialized
+         */
+        $this->authenticationInitialized = true;
+
+        /**
+         * Store state of this object in the session
+         */
+        $_SESSION[get_class($this)] = get_object_vars($this);
+
+        /**
+         * Redirect
+         */
+        $redirectLocation = $this->openidConfiguration['authorization_endpoint'] . '?' . http_build_query($params2);
+        header('Location: ' . $redirectLocation);
+        exit;
+        return;
     }
 
     /**

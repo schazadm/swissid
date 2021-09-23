@@ -23,11 +23,14 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 case 'login':
                     // TODO: retrieve email by Tools::getValue()
                     // TODO: also check mail validity
-                    $mail = 'osr.dev@outlook.com';
-                    // authenticate with the given mail address
-                    if (!$this->authenticateCustomer($mail)) {
-                        // if the authentication process failed set an error message as a cookie for the hook
-                        $this->context->cookie->__set('redirect_error', $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error'));
+                    if ($mail = Tools::getValue('mail')) {
+                        // authenticate with the given mail address
+                        if (!$this->authenticateCustomer($mail)) {
+                            // if the authentication process failed set an error message as a cookie for the hook
+                            $this->context->cookie->__set('redirect_error', $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error'));
+                        }
+                    } else {
+                        Tools::redirect($this->context->link->getModuleLink($this->module->name, 'redirect', ['action' => 'login'], true));
                     }
                     break;
                 case 'logout':
