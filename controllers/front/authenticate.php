@@ -64,15 +64,26 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
         }
     }
 
-    public function createAction()
-    {
-        // TODO: create
-    }
-
     public function logoutAction()
     {
         // TODO: might want to register 'actionCustomerLogoutBefore' hook and do something (like clean-up) when triggered
         echo 'swissid logout call';
+    }
+
+    public function createAction()
+    {
+        // TODO: create
+        if (Tools::getIsset('response')) {
+            $rs = Tools::getValue('response');
+            // TODO: change claims
+            if (isset($rs['claim']) && $rs['claim'] == 'email') {
+                // authenticate with the given mail address
+                if (!$this->authenticateCustomer($rs['email'])) {
+                    // if the authentication process failed set an error message as a cookie for the hook
+                    $this->context->cookie->__set('redirect_error', $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error'));
+                }
+            }
+        }
     }
 
     /**
