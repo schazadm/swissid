@@ -29,7 +29,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     /**
      * SwissidRedirectModuleFrontController constructor.
      *
-     * @throws PrestaShopException
+     * @throws Exception
      */
     public function __construct()
     {
@@ -49,6 +49,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->clientID = $configValues['SWISSID_CLIENT_ID'];
         $this->clientSecret = $configValues['SWISSID_CLIENT_SECRET'];
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
+        // TODO: Change when environment changes
         $this->environment = 'PRE';
     }
 
@@ -60,25 +61,37 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        // TODO: handle error given by swissid
+        // whenever errors are send from 'swissID'
         if (Tools::getIsset('error')) {
             $this->processErrorResponse();
+            $this->redirectToReferer();
         }
-
-        // TODO: retrieve received data
+        // whenever responses are send from 'swissID'
         if (Tools::getIsset('code')) {
             $this->processCodeResponse();
         }
-
+        // whenever actions are coming from 'authenticate'
         if (Tools::getIsset('action')) {
             switch (Tools::getValue('action')) {
                 case 'login':
+                    $this->context->cookie->__set(
+                        'redirect_http_ref',
+                        isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $this->context->link->getBaseLink()
+                    );
+                    $this->context->cookie->__set('redirect_action_type', 'login');
                     $this->authenticateUser();
                     break;
                 default:
+                    $this->context->cookie->__set(
+                        'redirect_http_ref',
+                        $this->context->link->getBaseLink()
+                    );
+                    $this->context->cookie->__set('redirect_action_type', 'none');
                     break;
             }
         }
+        // when no of the above keys are met, redirect to base
+        $this->redirectToReferer();
     }
 
     /**
@@ -114,21 +127,18 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 /**
                  * Handle the end-user who cancelled the authentication
                  */
-                ;
                 $this->setCookieErrorMessage(Tools::getValue('error_description'));
                 break;
             case 'access_denied':
                 /**
                  * Handle the end-user who didn't give consent
                  */
-                ;
                 $this->setCookieErrorMessage(Tools::getValue('error_description'));
                 break;
             case 'interaction_required':
                 /**
                  * Handle the end-user who didn't authenticate
                  */
-                ;
                 $this->setCookieErrorMessage(Tools::getValue('error_description'));
                 break;
             case 'invalid_client_id':
@@ -240,13 +250,11 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                             /**
                              * Handle the end-user who cancelled the authentication
                              */
-                            ;
                             break;
                         case 'interaction_required':
                             /**
                              * Handle the end-user who didn't authenticate
                              */
-                            ;
                             break;
                         case 'invalid_client_id':
                             /**
@@ -366,26 +374,17 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      * Redirect to the page where request came from
      *
      * @param string $errorMessage
-     * @throws PrestaShopException
+     * @throws Exception
      */
     private function redirectToReferer($errorMessage = null)
     {
-        Tools::redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : die(Tools::displayError($errorMessage)));
-    }
-
-    /**
-     * Checks given URL and returns a domain else false
-     *
-     * @param $url
-     * @return bool|mixed
-     */
-    private function getDomain($url)
-    {
-        $pieces = parse_url($url);
-        $domain = isset($pieces['host']) ? $pieces['host'] : '';
-        if (preg_match('/(?P<domain>[a-z0-9][a-z0-9\-]{1,63}\.[a-z.]{2,6})$/i', $domain, $regs)) {
-            return $regs['domain'];
-        }
-        return false;
+        // set cookie error message if there is one
+        ($errorMessage != null) ? $this->setCookieErrorMessage($errorMessage) : null;
+        // redirect to referer
+        Tools::redirect(
+            (!empty($this->context->cookie->__get('redirect_http_ref')))
+                ? $this->context->cookie->__get('redirect_http_ref')
+                : $this->context->link->getBaseLink()
+        );
     }
 }
