@@ -97,33 +97,16 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * Tries to register a new SwissID customer
+     *
      * @throws Exception
      */
     public function registerAction()
     {
         if (Tools::getIsset('response')) {
             $rs = Tools::getValue('response')['response'];
-            // create customer object and fill fields
-            $customer = new Customer();
-            $customer->id_gender = ($rs['gender'] == 'female') ? 2 : 1;
-            $customer->firstname = $rs['firstname'];
-            $customer->lastname = $rs['lastname'];
-            $id_lang = 0;
-            foreach (Language::getLanguages() as $language) {
-                if (strpos($rs['language'], $language['iso_code']) !== false) {
-                    $id_lang = $language['id_lang'];
-                }
-            }
-            $customer->id_lang = $id_lang;
-            $customer->email = $rs['email'];
-            // customer saver
-            $customerPersist = new CustomerPersister(
-                $this->context,
-                $this->get('hashing'),
-                $this->getTranslator(),
-                Configuration::get('PS_GUEST_CHECKOUT_ENABLED')
-            );
-            if (!$customerPersist->save($customer, Tools::passwdGen())) {
+            $customer = $this->createCustomer($rs);
+            if ($customer == null) {
                 $this->context->cookie->__set(
                     self::COOKIE_ERROR,
                     $this->module->l(
@@ -132,7 +115,28 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 );
                 Tools::redirect($this->context->link->getPageLink('authenticate', true));
             }
+            // create customer persister
+            $customerPersist = new CustomerPersister(
+                $this->context,
+                $this->get('hashing'),
+                $this->getTranslator(),
+                Configuration::get('PS_GUEST_CHECKOUT_ENABLED')
+            );
+            // try to save the customer
+            if (!$customerPersist->save($customer, Tools::passwdGen())) {
+                // set an error message for the customer
+                $this->context->cookie->__set(
+                    self::COOKIE_ERROR,
+                    $this->module->l(
+                        'An error occurred while trying to handle your request. Please try again later.'
+                    )
+                );
+                // redirect to authenticate page where the request originally started
+                Tools::redirect($this->context->link->getPageLink('authenticate', true));
+            }
+            // add newly created customer to swissID table
             SwissidCustomer::addSwissidCustomer($customer->id);
+            // redirect to my-account overview
             Tools::redirect($this->context->link->getPageLink('my-account', true));
         }
     }
@@ -222,7 +226,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * @param Customer $customer
      * @return bool
      */
-    private function updateCustomer(Customer $customer)
+    private function updateCustomer($customer)
     {
         try {
             $this->context->updateCustomer($customer);
@@ -235,33 +239,39 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     /**
      * Creates a {@link  Customer} based on the given arguments
      *
-     * @throws Exception
+     * @param array $data
+     * @return Customer|null
      */
-    private function createCustomer()
+    private function createCustomer($data)
     {
-        // TODO: request info in order to be able to create a customer
-
-        // TODO: create
-        // TODO: and loginCustomer(createdCustomer);
-        $this->context->cookie->__set(
-            self::COOKIE_INFO,
-            'Mail: ' . Tools::getValue('mail') . " needs to be created."
-        );
-        // TODO: remove after debugging
-        Tools::redirect(
-            $this->context->link->getPageLink('my-account', true)
-        );
-        return true;
+        try {
+            // create customer object and fill fields
+            $customer = new Customer();
+            $customer->id_gender = ($data['gender'] == 'female') ? 2 : 1;
+            $customer->firstname = $data['firstname'];
+            $customer->lastname = $data['lastname'];
+            // default the first language that is set in the shop
+            $id_lang = 1;
+            foreach (Language::getLanguages() as $language) {
+                if (strpos($data['language'], $language['iso_code']) !== false) {
+                    $id_lang = $language['id_lang'];
+                }
+            }
+            $customer->id_lang = $id_lang;
+            $customer->email = $data['email'];
+            return $customer;
+        } catch (Exception $e) {
+            return null;
+        }
     }
 
     /**
      * Prepares an information message for the customer and sets a cookie
      *
      * @param string $mail
-     *
      * @return bool
      */
-    private function promptCustomer(string $mail)
+    private function promptCustomer($mail)
     {
         $infoMessage = $this->module->l('A customer account with the specified email address');
         $infoMessage .= ' (' . $mail . ') ';
@@ -283,7 +293,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
         if (!isset($this->context->customer->id)) {
             return false;
         }
-
         return SwissidCustomer::addSwissidCustomer($this->context->customer->id);
     }
 
@@ -292,7 +301,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
         if (!isset($this->context->customer->id)) {
             return false;
         }
-
         return SwissidCustomer::removeSwissidCustomerByCustomerId($this->context->customer->id);
     }
 
