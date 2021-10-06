@@ -82,6 +82,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         // whenever errors are send from 'swissID'
         if (Tools::getIsset('error')) {
             $this->processErrorResponse();
+            $this->swissIDConnector->refreshAccessToken();
             $this->redirectToReferer();
         }
         // whenever responses are send from 'swissID'
@@ -90,17 +91,13 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         }
         // whenever actions are coming from 'authenticate'
         if (Tools::getIsset('action')) {
-            $this->context->cookie->__set(
-                self::COOKIE_HTTP_REF,
-                isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $this->context->link->getBaseLink()
-            );
             switch (Tools::getValue('action')) {
                 case 'login':
+                    $this->context->cookie->__set(self::COOKIE_HTTP_REF, isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $this->context->link->getBaseLink());
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'login');
                     $this->requestUserAuthentication();
                     break;
                 case 'register':
-                    $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'create');
                     $this->requestRegistrationInformation();
                     break;
                 default:
@@ -254,7 +251,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 $this->requestHasUserSufficientQOR();
             }
             $this->connectToSwissID();
-
             $rs['response']['gender'] = $this->swissIDConnector->getClaim('gender')['value'];
             $rs['response']['firstname'] = $this->swissIDConnector->getClaim('given_name')['value'];
             $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
@@ -263,7 +259,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
             $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
-
             $this->checkForConnectorError();
             if (!empty($rs)) {
                 Tools::redirect(
