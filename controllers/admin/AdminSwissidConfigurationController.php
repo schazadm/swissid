@@ -7,8 +7,6 @@
  */
 class AdminSwissidConfigurationController extends ModuleAdminController
 {
-    private $redirectUrl;
-
     /**
      * AdminSwissidConfigurationController constructor.
      *
@@ -18,7 +16,6 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         $this->bootstrap = true;
         parent::__construct();
-        $this->redirectUrl = Configuration::get('SWISSID_REDIRECT_URL');
     }
 
     /**
@@ -29,11 +26,9 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
             'info_tpl' => $this->module->getLocalPath() . 'views/templates/admin/info.tpl',
-            'redirect_url' => $this->redirectUrl,
+            'redirect_url' => Configuration::get('SWISSID_REDIRECT_URL'),
         ]);
-
         parent::init();
-
         $this->context->smarty->assign([
             'form' => $this->initOptions()
         ]);
@@ -79,13 +74,19 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],
+                    'SWISSID_AGE_VERIFICATION_TEXT' => [
+                        'title' => $this->module->l('Age verification text'),
+                        'desc' => $this->module->l('Decide which text should be displayed during the verification process'),
+                        'hint' => $this->module->l('Hint...'),
+                        'type' => 'textareaLang',
+                        'lang' => true,
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->module->l('Save')
                 ]
             ]
         ];
-
         return $this->renderOptions();
     }
 
@@ -106,6 +107,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
             'psVersion' => _PS_VERSION_,
             'ageVerificationInputName' => 'SWISSID_AGE_VERIFICATION',
             'ageVerificationOptionalInputName' => 'SWISSID_AGE_VERIFICATION_OPTIONAL',
+            'ageVerificationTextInputName' => 'SWISSID_AGE_VERIFICATION_TEXT',
         ]);
     }
 }
