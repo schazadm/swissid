@@ -390,7 +390,7 @@ class SwissIDConnector
      *
      * @return bool
      */
-    private function refreshAccessToken(): bool
+    public function refreshAccessToken(): bool
     {
         if (is_null($this->refreshToken)) {
             /**
