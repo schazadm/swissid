@@ -25,9 +25,6 @@ class Swissid extends Module
     private $infoMsg;
     private $successMsg;
 
-    // TODO: remove after db table is done
-    private $ageVerificationText;
-
     public function __construct()
     {
         $this->name = 'swissid';
@@ -44,9 +41,6 @@ class Swissid extends Module
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
 
         $this->fillMessages();
-
-        // TODO: Separate table for 'Age verification text' and also by doing that move configuration there
-        $this->ageVerificationText = $this->l('With the introduction of the new federal law on tobacco products and electronic cigarettes in switzerland, the age of consumers must now be checked. this is done in our online shop with the help of swissid. you have your identity checked once and you can afterwards save it in your account.');
     }
 
     public function install()
@@ -66,6 +60,7 @@ class Swissid extends Module
             'displayCustomerAccountFormTop',
             'displayCustomerLoginFormAfter',
             'displayPersonalInformationTop',
+            'actionObjectCustomerDeleteAfter',
         ];
         // register hooks
         if (!$this->registerHook($hooks)) {
@@ -173,6 +168,7 @@ class Swissid extends Module
             Configuration::updateValue('SWISSID_CLIENT_ID', '');
             Configuration::updateValue('SWISSID_CLIENT_SECRET', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION', '');
+            Configuration::updateValue('SWISSID_AGE_VERIFICATION_TEXT', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION_OPTIONAL', '');
         } catch (Exception | PrestaShopException $e) {
             return false;
@@ -192,6 +188,7 @@ class Swissid extends Module
             Configuration::deleteByName('SWISSID_CLIENT_ID');
             Configuration::deleteByName('SWISSID_CLIENT_SECRET');
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION');
+            Configuration::deleteByName('SWISSID_AGE_VERIFICATION_TEXT');
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION_OPTIONAL');
         } catch (Exception | PrestaShopException $e) {
             return false;
@@ -240,7 +237,7 @@ class Swissid extends Module
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
                 'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
-                'age_verification_text' => $this->ageVerificationText,
+                'age_verification_text' => $this->getAgeVerificationText(),
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
                 'info_msg' => $this->infoMsg,
@@ -268,7 +265,6 @@ class Swissid extends Module
                 $age_over = true;
             }
         }
-
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
             [
                 'link' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => $action], true),
@@ -278,13 +274,21 @@ class Swissid extends Module
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
                 'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
-                'age_verification_text' => $this->ageVerificationText,
+                'age_verification_text' => $this->getAgeVerificationText(),
                 'error_msg' => $this->errorMsg,
                 'warning_msg' => $this->warningMsg,
                 'info_msg' => $this->infoMsg,
                 'success_msg' => $this->successMsg,
             ]
         );
+    }
+
+    /**
+     * @return string
+     */
+    private function getAgeVerificationText()
+    {
+        return Configuration::get('SWISSID_AGE_VERIFICATION_TEXT', $this->context->language->id);
     }
 
     /**
@@ -361,5 +365,14 @@ class Swissid extends Module
                 'info_msg' => $this->infoMsg,
             ]
         );
+    }
+
+    public function hookActionObjectCustomerDeleteAfter($params)
+    {
+        $customer = $params['object'];
+        if (!isset($customer->id)) {
+            return false;
+        }
+        return SwissidCustomer::removeSwissidCustomerByCustomerId($customer->id);
     }
 }
