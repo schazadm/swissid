@@ -11,9 +11,7 @@ require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
  */
 class SwissidRedirectModuleFrontController extends ModuleFrontController
 {
-    const COOKIE_HTTP_REF = 'redirect_http_ref';
     const COOKIE_ACTION_TYPE = 'redirect_action_type';
-    const COOKIE_ERROR = 'redirect_error';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -42,7 +40,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             if (_PS_MODE_DEV_) {
                 $this->showError($errorMessage);
             } else {
-                $this->redirectToReferer($errorMessage);
+                $this->responseError();
             }
         }
         // get the configuration
@@ -82,8 +80,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         // whenever errors are send from 'swissID'
         if (Tools::getIsset('error')) {
             $this->processErrorResponse();
-            $this->swissIDConnector->refreshAccessToken();
-            $this->redirectToReferer();
+            // $this->swissIDConnector->refreshAccessToken();
+            // $this->redirectToReferer();
         }
         // whenever responses are send from 'swissID'
         if (Tools::getIsset('code')) {
@@ -93,21 +91,26 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         if (Tools::getIsset('action')) {
             switch (Tools::getValue('action')) {
                 case 'login':
-                    $this->context->cookie->__set(self::COOKIE_HTTP_REF, isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $this->context->link->getBaseLink());
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'login');
                     $this->requestUserAuthentication();
                     break;
                 case 'register':
+                    $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'register');
                     $this->requestRegistrationInformation();
                     break;
+                case 'ageVerify':
+                    $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'ageVerify');
+                    if ($this->requestHasUserSufficientQOR()) {
+                        $this->ageVerifyAction();
+                    }
+                    break;
                 default:
-                    $this->context->cookie->__set(self::COOKIE_HTTP_REF, $this->context->link->getBaseLink());
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'none');
                     break;
             }
         }
         // when no of the above keys are found, redirect to base
-        $this->redirectToReferer();
+        $this->responseError();
     }
 
     /**
@@ -122,9 +125,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             case 'login':
                 $this->loginAction();
                 break;
-            default:
-                $this->redirectToReferer();
-                break;
         }
     }
 
@@ -136,6 +136,11 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->connectToSwissID();
         $this->swissIDConnector->completeAuthentication();
         $this->checkForConnectorError();
+        // get the configuration
+        $configValues = $this->getConfigValues();
+        if ($configValues['SWISSID_AGE_VERIFICATION']) {
+            $this->requestHasUserSufficientQOR();
+        }
         $rs = $this->swissIDConnector->getClaim('email');
         $this->checkForConnectorError();
         if (!empty($rs)) {
@@ -164,13 +169,51 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * @throws PrestaShopException
+     */
+    private function ageVerifyAction()
+    {
+        try {
+            $this->connectToSwissID();
+            $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
+            $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
+            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+            $this->checkForConnectorError();
+            if (!empty($rs)) {
+                Tools::redirect(
+                    $this->context->link->getModuleLink(
+                        $this->module->name,
+                        'authenticate',
+                        [
+                            'action' => 'ageVerify',
+                            'response' => $rs
+                        ],
+                        true
+                    )
+                );
+            }
+            Tools::redirect(
+                $this->context->link->getModuleLink(
+                    $this->module->name,
+                    'authenticate',
+                    [
+                        'error' => 'Response is empty.'
+                    ],
+                    true
+                )
+            );
+        } catch (Exception $e) {
+            $this->showError($e->getMessage());
+        }
+    }
+
+    /**
      * @throws Exception
      */
     private function processErrorResponse()
     {
         // TODO: set error messages
         $error = Tools::getValue('error');
-        $this->setCookieErrorMessage(Tools::getValue('error_description'));
         switch ($error) {
             case 'authentication_cancelled':
                 /**
@@ -213,7 +256,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                  */
                 break;
         }
-        return;
+        $this->responseError(Tools::getValue('error_description'));
     }
 
     /**
@@ -273,16 +316,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                     )
                 );
             }
-            Tools::redirect(
-                $this->context->link->getModuleLink(
-                    $this->module->name,
-                    'authenticate',
-                    [
-                        'error' => 'Response is empty.'
-                    ],
-                    true
-                )
-            );
+            $this->responseError('Response is empty');
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
@@ -304,9 +338,11 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 $this->swissIDConnector->stepUpQoR('qor1', $nonce);
                 $this->checkForConnectorError();
             }
+            $this->checkForConnectorError();
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
+        return true;
     }
 
     /**
@@ -431,35 +467,12 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * Sets a cookie error message
-     *
-     * @param $message
-     * @throws Exception
+     * @param $errorMessage
      */
-    private function setCookieErrorMessage($message)
+    private function responseError($errorMessage = null)
     {
-        if (is_array($message)) {
-            $this->context->cookie->__set(self::COOKIE_ERROR, json_encode($message));
-        } else {
-            $this->context->cookie->__set(self::COOKIE_ERROR, $message);
-        }
-    }
-
-    /**
-     * Redirect to the page where request came from
-     *
-     * @param string $errorMessage
-     * @throws Exception
-     */
-    private function redirectToReferer($errorMessage = null)
-    {
-        // set cookie error message if there is one
-        ($errorMessage != null) ? $this->setCookieErrorMessage($errorMessage) : null;
-        // redirect to referer
-        Tools::redirect(
-            (!empty($this->context->cookie->__get(self::COOKIE_HTTP_REF)))
-                ? $this->context->cookie->__get(self::COOKIE_HTTP_REF)
-                : $this->context->link->getBaseLink()
-        );
+        $e['error'] = true;
+        ($errorMessage != null) ? $e['error_description'] = $errorMessage : null;
+        Tools::redirect($this->context->link->getModuleLink($this->module->name, 'authenticate', $e));
     }
 }

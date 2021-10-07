@@ -20,11 +20,6 @@ class Swissid extends Module
     const ADMIN_SWISSID_CONFIGURATION_CONTROLLER = 'AdminSwissidConfiguration';
     const ADMIN_SWISSID_CUSTOMER_CONTROLLER = 'AdminSwissidCustomer';
 
-    private $errorMsg;
-    private $warningMsg;
-    private $infoMsg;
-    private $successMsg;
-
     public function __construct()
     {
         $this->name = 'swissid';
@@ -39,8 +34,6 @@ class Swissid extends Module
         $this->description = $this->l('Log in easily and securely with SwissID.');
         $this->confirmUninstall = $this->l('Are you sure about removing the registered clients?');
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
-
-        $this->fillMessages();
     }
 
     public function install()
@@ -132,29 +125,6 @@ class Swissid extends Module
     }
 
     /**
-     * Retrieves cookie messages and fills the local message variables
-     */
-    private function fillMessages()
-    {
-        if (isset($this->context->cookie->redirect_error)) {
-            $this->errorMsg = $this->context->cookie->redirect_error;
-            unset($this->context->cookie->redirect_error);
-        }
-        if (isset($this->context->cookie->redirect_warning)) {
-            $this->warningMsg = $this->context->cookie->redirect_warning;
-            unset($this->context->cookie->redirect_warning);
-        }
-        if (isset($this->context->cookie->redirect_info)) {
-            $this->infoMsg = $this->context->cookie->redirect_info;
-            unset($this->context->cookie->redirect_info);
-        }
-        if (isset($this->context->cookie->redirect_success)) {
-            $this->successMsg = $this->context->cookie->redirect_success;
-            unset($this->context->cookie->redirect_success);
-        }
-    }
-
-    /**
      * Defines and sets configuration values
      *
      * @return bool
@@ -201,23 +171,36 @@ class Swissid extends Module
      */
     public function hookDisplayHeader()
     {
+        // add CSS and JS assets to the front context
         $this->context->controller->addJS($this->_path . '/views/js/swissid-front.js');
         $this->context->controller->addCSS($this->_path . '/views/css/swissid-front.css');
         $this->context->controller->addCSS($this->_path . '/views/css/sesam-buttons.css');
-
-        if (isset($this->context->customer->id)
-            && Tools::getValue('controller') == 'order'
-            && Configuration::get('SWISSID_AGE_VERIFICATION')
-            && SwissidCustomer::isCustomerLinkedById($this->context->customer->id)
-            && !SwissidCustomer::isCustomerAgeOver($this->context->customer->id)
-        ) {
+        // check whether we're on the order page and age verification is on
+        if (Tools::getValue('controller') == 'order' && Configuration::get('SWISSID_AGE_VERIFICATION')) {
+            // if there is no customer logged in then let them login first
+            if (!isset($this->context->customer->id)) {
+                return null;
+            }
+            // check whether a customer is logged in and is already verified
+            if (isset($this->context->customer->id)
+                && SwissidCustomer::isCustomerLinkedById($this->context->customer->id)
+                && SwissidCustomer::isCustomerAgeOver($this->context->customer->id)
+            ) {
+                return null;
+            }
+            // if age verification is not optional always return verify modal
+            if (!Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL')) {
+                return $this->getAgeVerifyModal();
+            }
+            // if age verification is optional then try to determine if its first time ask or else don't show
             if (!isset($this->context->cookie->swissid_verify_asked)) {
                 $this->context->cookie->__set('swissid_verify_asked', true);
                 return $this->getAgeVerifyModal();
-            } else {
-                if (!Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL')) {
-                    return $this->getAgeVerifyModal();
-                }
+            }
+            // if cookie is set and it's set to false then show
+            if (isset($this->context->cookie->swissid_verify_asked) && !$this->context->cookie->swissid_verify_asked) {
+                $this->context->cookie->__set('swissid_verify_asked', true);
+                return $this->getAgeVerifyModal();
             }
         }
         return null;
@@ -232,15 +215,14 @@ class Swissid extends Module
             [
                 'show' => true,
                 'img_dir_url' => $this->_path . 'views/img',
-                'linked' => true,
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
-                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
+                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => 'ageVerify',
+                    'redirect_s' => $this->context->link->getPageLink('order'),
+                    'redirect_e' => $this->context->link->getPageLink('order')
+                ], true),
                 'age_verification_text' => $this->getAgeVerificationText(),
-                'error_msg' => $this->errorMsg,
-                'warning_msg' => $this->warningMsg,
-                'info_msg' => $this->infoMsg,
-                'success_msg' => $this->successMsg,
             ]
         );
     }
@@ -266,18 +248,22 @@ class Swissid extends Module
         }
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
             [
-                'link' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => $action], true),
+                'link' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => $action,
+                    'redirect_s' => $this->context->link->getPageLink('my-account'),
+                    'redirect_e' => $this->context->link->getPageLink('my-account')
+                ], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
                 'age_over' => $age_over,
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
-                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'age_verify'], true),
+                'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => 'ageVerify',
+                    'redirect_s' => $this->context->link->getPageLink('my-account'),
+                    'redirect_e' => $this->context->link->getPageLink('my-account'),
+                ], true),
                 'age_verification_text' => $this->getAgeVerificationText(),
-                'error_msg' => $this->errorMsg,
-                'warning_msg' => $this->warningMsg,
-                'info_msg' => $this->infoMsg,
-                'success_msg' => $this->successMsg,
             ]
         );
     }
@@ -303,15 +289,15 @@ class Swissid extends Module
                 $linked = true;
             }
         }
-
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => 'login',
+                    'redirect_s' => $this->context->link->getPageLink('my-account'),
+                    'redirect_e' => $this->context->link->getPageLink('authentication', ['create_account' => 1]),
+                ], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
-                'error_msg' => $this->errorMsg,
-                'warning_msg' => $this->warningMsg,
-                'info_msg' => $this->infoMsg,
             ]
         );
     }
@@ -325,11 +311,12 @@ class Swissid extends Module
     {
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => 'login',
+                    'redirect_s' => $this->context->link->getPageLink('my-account'),
+                    'redirect_e' => $this->context->link->getPageLink('authentication'),
+                ], true),
                 'img_dir_url' => $this->_path . 'views/img',
-                'error_msg' => $this->errorMsg,
-                'warning_msg' => $this->warningMsg,
-                'info_msg' => $this->infoMsg,
             ]
         );
     }
@@ -346,14 +333,14 @@ class Swissid extends Module
                 return null;
             }
         }
-
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
-                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', ['action' => 'login'], true),
+                'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
+                    'action' => 'login',
+                    'redirect_s' => $this->context->link->getPageLink('order'),
+                    'redirect_e' => $this->context->link->getPageLink('order'),
+                ], true),
                 'img_dir_url' => $this->_path . 'views/img',
-                'error_msg' => $this->errorMsg,
-                'warning_msg' => $this->warningMsg,
-                'info_msg' => $this->infoMsg,
             ]
         );
     }

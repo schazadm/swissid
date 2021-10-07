@@ -32,21 +32,6 @@
         {/if}
 >
     <span class="link-item">
-        <div class="bootstrap">
-            {if $error_msg}
-                <div class="alert alert-danger">{$error_msg|nl2br nofilter}</div>
-            {/if}
-            {if $warning_msg}
-                <div class="alert alert-warning">{$warning_msg|nl2br nofilter}</div>
-            {/if}
-            {if $info_msg}
-                <div class="alert alert-info">{$info_msg|nl2br nofilter}</div>
-            {/if}
-            {if $success_msg}
-                <div class="alert alert-success">{$success_msg|nl2br nofilter}</div>
-            {/if}
-        </div>
-
         <i class="material-icons">
             <span class="swissid-myAccountBlock swissid-btn swissid-btn-primary swissid-btn-connect swissid-btn-mini swissid-btn-connect-black">
                 <span class="connect" aria-hidden="true"></span>

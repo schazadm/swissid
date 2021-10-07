@@ -7,10 +7,8 @@
  */
 class SwissidAuthenticateModuleFrontController extends ModuleFrontController
 {
-    const COOKIE_HTTP_REF = 'redirect_http_ref';
-    const COOKIE_ERROR = 'redirect_error';
-    const COOKIE_INFO = 'redirect_info';
-    const COOKIE_SUCCESS = 'redirect_success';
+    const COOKIE_HTTP_REF_S = 'redirect_http_ref_s';
+    const COOKIE_HTTP_REF_E = 'redirect_http_ref_e';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -19,21 +17,21 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * POST entry of the controller
      * Switches accordingly by the given action parameter
      *
-     * @throws PrestaShopException
      * @throws Exception
      */
     public function postProcess()
     {
         if (Tools::getIsset('error')) {
-            $this->context->cookie->__set(
-                self::COOKIE_ERROR,
-                $this->module->l(
-                    'An error occurred while trying to handle your request. Please try again later.'
-                )
-            );
+            if (Tools::getIsset('error_description')) {
+                $this->errors[] = Tools::getValue('error_description');
+            } else {
+                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
+            }
+            $this->redirectWithNotifications($this->getRedirectPage(true));
         }
-
         if (Tools::getIsset('action')) {
+            $this->context->cookie->__set(self::COOKIE_HTTP_REF_S, Tools::getIsset('redirect_s') ? Tools::getValue('redirect_s') : $this->context->link->getBaseLink());
+            $this->context->cookie->__set(self::COOKIE_HTTP_REF_E, Tools::getIsset('redirect_e') ? Tools::getValue('redirect_e') : $this->context->link->getBaseLink());
             switch (Tools::getValue('action')) {
                 case 'login':
                     $this->loginAction();
@@ -50,10 +48,11 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 case 'disconnect':
                     $this->disconnectAction();
                     break;
+                case 'ageVerify':
+                    $this->ageVerificationAction();
+                    break;
             }
         }
-
-        $this->redirectToReferer();
     }
 
     /**
@@ -70,23 +69,23 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 if (!$this->authenticateCustomer($rs['value'])) {
                     // if the authentication process failed set an error message as a cookie for the hook
                     $this->errors[] = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
-                    $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
+                    $this->redirectWithNotifications($this->getRedirectPage());
                 }
             }
         } else {
             Tools::redirect(
                 $this->context->link->getModuleLink(
-                    $this->module->name,
-                    'redirect',
-                    [
+                    $this->module->name, 'redirect', [
                         'action' => 'login'
-                    ],
-                    true
+                    ]
                 )
             );
         }
     }
 
+    /**
+     *
+     */
     public function logoutAction()
     {
         // TODO: might want to register 'actionCustomerLogoutBefore' hook and do something (like clean-up) when triggered
@@ -105,7 +104,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             $customer = $this->createCustomer($rs);
             if ($customer == null) {
                 $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
-                $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
+                $this->redirectWithNotifications($this->getRedirectPage());
             }
             $customerPersist = new CustomerPersister(
                 $this->context,
@@ -116,14 +115,14 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             // try to save the customer
             if (!$customerPersist->save($customer, Tools::passwdGen())) {
                 $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
-                $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
+                $this->redirectWithNotifications($this->getRedirectPage());
             }
             // add newly created customer to swissID table
             SwissidCustomer::addSwissidCustomer($customer->id);
             $this->info[] = $this->module->l('Your newly created local account was automatically linked to your SwissID account.');
             // redirect to my-account overview
             $this->success[] = $this->module->l('Registration with SwissID was successful.');
-            $this->redirectWithNotifications($this->context->link->getPageLink('my-account', true));
+            $this->redirectWithNotifications($this->getRedirectPage());
         }
     }
 
@@ -135,17 +134,12 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function connectAction()
     {
         if ($this->connectCustomer()) {
-            $this->context->cookie->__set(
-                self::COOKIE_SUCCESS,
-                $this->module->l('Successfully connected to your SwissID')
-            );
+            $this->success[] = $this->module->l('Successfully connected to your SwissID');
+            $this->redirectWithNotifications($this->getRedirectPage());
         } else {
-            $this->context->cookie->__set(
-                self::COOKIE_ERROR,
-                $this->module->l('An error occurred while connecting your SwissID account to your local account. Please try again.')
-            );
+            $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account. Please try again.');
+            $this->redirectWithNotifications($this->getRedirectPage(true));
         }
-        $this->redirectToReferer();
     }
 
     /**
@@ -156,23 +150,41 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function disconnectAction()
     {
         if ($this->disconnectCustomer()) {
-            $this->context->cookie->__set(
-                self::COOKIE_SUCCESS,
-                $this->module->l('Successfully disconnected from your SwissID')
-            );
+            $this->success[] = $this->module->l('Successfully disconnected from your SwissID');
+            $this->redirectWithNotifications($this->getRedirectPage());
         } else {
-            $this->context->cookie->__set(
-                self::COOKIE_ERROR,
-                $this->module->l('An error occurred while disconnecting your SwissID account from your local account. Please try again.')
+            $this->errors[] = $this->module->l('An error occurred while disconnecting your SwissID account from your local account. Please try again.');
+            $this->redirectWithNotifications($this->getRedirectPage(true));
+        }
+    }
+
+    /**
+     * @todo implement function
+     */
+    public function ageVerificationAction()
+    {
+        if (Tools::getIsset('response')) {
+            $rs = Tools::getValue('response')['response'];
+
+        } else {
+            Tools::redirect(
+                $this->context->link->getModuleLink(
+                    $this->module->name,
+                    'redirect',
+                    [
+                        'action' => 'ageVerify'
+                    ],
+                    true
+                )
             );
         }
-        $this->redirectToReferer();
     }
 
     /**
      * Tries to authenticate a customer with the given email address
      *
      * @param string $mail A valid email address
+     *
      * @return bool Returns true if customer exists and is authenticated
      */
     private function authenticateCustomer($mail)
@@ -202,7 +214,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
             $this->updateCustomer($customer);
             $this->success[] = $this->module->l('Authentication with SwissID was successful.');
-            $this->redirectWithNotifications($this->context->link->getPageLink('my-account', true));
+            $this->redirectWithNotifications($this->getRedirectPage());
         } catch (Exception $e) {
             return false;
         }
@@ -213,6 +225,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * Updates the customer in the context of the shop
      *
      * @param Customer $customer
+     *
      * @return bool
      */
     private function updateCustomer($customer)
@@ -229,6 +242,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      * Creates a {@link  Customer} based on the given arguments
      *
      * @param array $data
+     *
      * @return Customer|null
      */
     private function createCustomer($data)
@@ -255,28 +269,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * Prepares an information message for the customer and sets a cookie
+     * Link customer in the swissID table
      *
-     * @param string $mail
      * @return bool
      */
-    private function promptCustomer($mail)
-    {
-        $infoMessage = $this->module->l('A customer account with the specified email address');
-        $infoMessage .= ' (' . $mail . ') ';
-        $infoMessage .= $this->module->l('already exists.') . ' ';
-        $infoMessage .= $this->module->l('Please try to log in to your local account and then link your account to your SwissID account.');
-        try {
-            $this->context->cookie->__set(
-                self::COOKIE_INFO,
-                $this->module->l($infoMessage, 'SwissidAuthentication')
-            );
-        } catch (Exception $e) {
-            return false;
-        }
-        return true;
-    }
-
     private function connectCustomer()
     {
         if (!isset($this->context->customer->id)) {
@@ -285,6 +281,11 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
         return SwissidCustomer::addSwissidCustomer($this->context->customer->id);
     }
 
+    /**
+     * Remove customer from the swissID table
+     *
+     * @return bool
+     */
     private function disconnectCustomer()
     {
         if (!isset($this->context->customer->id)) {
@@ -294,14 +295,22 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * Redirect to the page where request came from
+     * @param bool $error
+     *
+     * @return string
      */
-    private function redirectToReferer()
+    private function getRedirectPage($error = false)
     {
-        Tools::redirect(
-            (!empty($this->context->cookie->__get(self::COOKIE_HTTP_REF)))
-                ? $this->context->cookie->__get(self::COOKIE_HTTP_REF)
-                : $this->context->link->getBaseLink()
-        );
+        $r = $this->context->link->getBaseLink();
+        if ($error) {
+            if (!empty($this->context->cookie->__get(self::COOKIE_HTTP_REF_E))) {
+                $r = $this->context->cookie->__get(self::COOKIE_HTTP_REF_E);
+            }
+        } else {
+            if (!empty($this->context->cookie->__get(self::COOKIE_HTTP_REF_S))) {
+                $r = $this->context->cookie->__get(self::COOKIE_HTTP_REF_S);
+            }
+        }
+        return $r;
     }
 }
