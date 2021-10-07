@@ -49,7 +49,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $configValues = $this->getConfigValues();
         // set the configuration values
         $this->clientID = $configValues['SWISSID_CLIENT_ID'];
-        $this->clientSecret = $configValues['SWISSID_CLIENT_SECRET'];
+        $this->clientSecret = (new PhpEncryption(_NEW_COOKIE_KEY_))->decrypt($configValues['SWISSID_CLIENT_SECRET']);
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
         // TODO: Change when environment changes
         $this->environment = 'PRE';

@@ -57,7 +57,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                         'title' => $this->module->l('Secret'),
                         'desc' => $this->module->l('Enter a valid client secret'),
                         'hint' => $this->module->l('The secret is an extra layer of security and is also provided by the SwissSign Group'),
-                        'type' => 'text',
+                        'type' => 'osr_password',
                         'required' => true,
                     ],
                     'SWISSID_AGE_VERIFICATION' => [
@@ -109,5 +109,22 @@ class AdminSwissidConfigurationController extends ModuleAdminController
             'ageVerificationOptionalInputName' => 'SWISSID_AGE_VERIFICATION_OPTIONAL',
             'ageVerificationTextInputName' => 'SWISSID_AGE_VERIFICATION_TEXT',
         ]);
+    }
+
+    /**
+     * Before updating try to check values
+     *
+     * @throws PrestaShopException
+     */
+    public function beforeUpdateOptions()
+    {
+        try {
+            $secretPlainText = Tools::getValue('SWISSID_CLIENT_SECRET');
+            $cipher = (new PhpEncryption(_NEW_COOKIE_KEY_))->encrypt($secretPlainText);
+            $_POST['SWISSID_CLIENT_SECRET'] = $cipher;
+        } catch (Exception $e) {
+            Tools::displayError($e->getMessage());
+        }
+        parent::beforeUpdateOptions();
     }
 }
