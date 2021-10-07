@@ -9,7 +9,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
 {
     const COOKIE_HTTP_REF = 'redirect_http_ref';
     const COOKIE_ERROR = 'redirect_error';
-    const COOKIE_WARNING = 'redirect_warning';
     const COOKIE_INFO = 'redirect_info';
     const COOKIE_SUCCESS = 'redirect_success';
 
@@ -70,10 +69,8 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 // authenticate with the given mail address
                 if (!$this->authenticateCustomer($rs['value'])) {
                     // if the authentication process failed set an error message as a cookie for the hook
-                    $this->context->cookie->__set(
-                        self::COOKIE_ERROR,
-                        $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error')
-                    );
+                    $this->errors[] = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
+                    $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
                 }
             }
         } else {
@@ -107,15 +104,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             $rs = Tools::getValue('response')['response'];
             $customer = $this->createCustomer($rs);
             if ($customer == null) {
-                $this->context->cookie->__set(
-                    self::COOKIE_ERROR,
-                    $this->module->l(
-                        'An error occurred while trying to handle your request. Please try again later.'
-                    )
-                );
-                Tools::redirect($this->context->link->getPageLink('authenticate', true));
+                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
+                $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
             }
-            // create customer persister
             $customerPersist = new CustomerPersister(
                 $this->context,
                 $this->get('hashing'),
@@ -124,20 +115,15 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             );
             // try to save the customer
             if (!$customerPersist->save($customer, Tools::passwdGen())) {
-                // set an error message for the customer
-                $this->context->cookie->__set(
-                    self::COOKIE_ERROR,
-                    $this->module->l(
-                        'An error occurred while trying to handle your request. Please try again later.'
-                    )
-                );
-                // redirect to authenticate page where the request originally started
-                Tools::redirect($this->context->link->getPageLink('authenticate', true));
+                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
+                $this->redirectWithNotifications($this->context->link->getPageLink('authenticate', true));
             }
             // add newly created customer to swissID table
             SwissidCustomer::addSwissidCustomer($customer->id);
+            $this->info[] = $this->module->l('Your newly created local account was automatically linked to your SwissID account.');
             // redirect to my-account overview
-            Tools::redirect($this->context->link->getPageLink('my-account', true));
+            $this->success[] = $this->module->l('Registration with SwissID was successful.');
+            $this->redirectWithNotifications($this->context->link->getPageLink('my-account', true));
         }
     }
 
@@ -211,9 +197,12 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             // check whether the customer is not linked in the swissid table
             if (!SwissidCustomer::isCustomerLinkedById($customer->id)) {
                 // link customer -> first time login with swissID
+                $this->info[] = $this->module->l('Your local account was automatically linked to your SwissID account.');
                 SwissidCustomer::addSwissidCustomer($customer->id);
             }
             $this->updateCustomer($customer);
+            $this->success[] = $this->module->l('Authentication with SwissID was successful.');
+            $this->redirectWithNotifications($this->context->link->getPageLink('my-account', true));
         } catch (Exception $e) {
             return false;
         }
