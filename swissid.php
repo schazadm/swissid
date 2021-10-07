@@ -56,7 +56,6 @@ class Swissid extends Module
             'displayHeader',
             'backOfficeHeader',
             'displayCustomerAccount',
-            'displayCustomerAccountForm',
             'displayCustomerAccountFormTop',
             'displayCustomerLoginFormAfter',
             'displayPersonalInformationTop',
@@ -289,14 +288,6 @@ class Swissid extends Module
     private function getAgeVerificationText()
     {
         return Configuration::get('SWISSID_AGE_VERIFICATION_TEXT', $this->context->language->id);
-    }
-
-    /**
-     * hook is displayed on the page 'my-account -> profile'
-     */
-    public function hookDisplayCustomerAccountForm()
-    {
-        //TODO: delete...not needed
     }
 
     /**
