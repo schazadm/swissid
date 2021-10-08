@@ -345,6 +345,13 @@ class Swissid extends Module
         );
     }
 
+    /**
+     * hook to react if a customer is deleted from the shop by the merchant
+     *
+     * @param $params
+     *
+     * @return bool
+     */
     public function hookActionObjectCustomerDeleteAfter($params)
     {
         $customer = $params['object'];
