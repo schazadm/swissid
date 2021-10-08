@@ -21,6 +21,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
+        // whenever errors are send from 'redirect'
         if (Tools::getIsset('error')) {
             if (Tools::getIsset('error_description')) {
                 $this->errors[] = Tools::getValue('error_description');
@@ -29,6 +30,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
             $this->redirectWithNotifications($this->getRedirectPage(true));
         }
+        // whenever actions are coming from 'FrontOffice' or 'BackOffice'
         if (Tools::getIsset('action')) {
             $this->context->cookie->__set(self::COOKIE_HTTP_REF_S, Tools::getIsset('redirect_s') ? Tools::getValue('redirect_s') : $this->context->link->getBaseLink());
             $this->context->cookie->__set(self::COOKIE_HTTP_REF_E, Tools::getIsset('redirect_e') ? Tools::getValue('redirect_e') : $this->context->link->getBaseLink());
@@ -63,10 +65,15 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function loginAction()
     {
         if (Tools::getIsset('response')) {
-            $rs = Tools::getValue('response');
-            if (isset($rs['claim']) && $rs['claim'] == 'email') {
+            // $rs = Tools::getValue('response');
+            $rs = Tools::getValue('response')['response'];
+            if (isset($rs['email']) && !empty($rs['email'])) {
+                $ageOver = null;
+                if (isset($rs['age_over']) && !empty($rs['age_over'])) {
+                    $ageOver = $rs['age_over'];
+                }
                 // authenticate with the given mail address
-                if (!$this->authenticateCustomer($rs['value'])) {
+                if (!$this->authenticateCustomer($rs['email'], $ageOver)) {
                     // if the authentication process failed set an error message as a cookie for the hook
                     $this->errors[] = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
                     $this->redirectWithNotifications($this->getRedirectPage());
@@ -117,8 +124,12 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
                 $this->redirectWithNotifications($this->getRedirectPage());
             }
+            $ageOver = 0;
+            if (isset($rs['age_over']) && !empty($rs['age_over'])) {
+                $ageOver = $rs['age_over'];
+            }
             // add newly created customer to swissID table
-            SwissidCustomer::addSwissidCustomer($customer->id);
+            SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
             $this->info[] = $this->module->l('Your newly created local account was automatically linked to your SwissID account.');
             // redirect to my-account overview
             $this->success[] = $this->module->l('Registration with SwissID was successful.');
@@ -165,7 +176,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     {
         if (Tools::getIsset('response')) {
             $rs = Tools::getValue('response')['response'];
-
+            // TODO: do this only if local account exists else just verify -> add COOKIE_GUEST_VERIFY = true
+            // TODO: based on the response check if already exists in the swissid table
+            // if not add new entry with age over attribute
+            // if exists then only alter age over attribute
         } else {
             Tools::redirect(
                 $this->context->link->getModuleLink(
@@ -185,9 +199,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
      *
      * @param string $mail A valid email address
      *
+     * @param null $ageOver
      * @return bool Returns true if customer exists and is authenticated
      */
-    private function authenticateCustomer($mail)
+    private function authenticateCustomer($mail, $ageOver = null)
     {
         try {
             // check whether a customer with the given email address already exists
@@ -210,7 +225,11 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             if (!SwissidCustomer::isCustomerLinkedById($customer->id)) {
                 // link customer -> first time login with swissID
                 $this->info[] = $this->module->l('Your local account was automatically linked to your SwissID account.');
-                SwissidCustomer::addSwissidCustomer($customer->id);
+                if ($ageOver != null) {
+                    SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
+                } else {
+                    SwissidCustomer::addSwissidCustomer($customer->id);
+                }
             }
             $this->updateCustomer($customer);
             $this->success[] = $this->module->l('Authentication with SwissID was successful.');

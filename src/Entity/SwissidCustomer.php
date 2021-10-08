@@ -79,19 +79,21 @@ class SwissidCustomer extends ObjectModel
 
     /**
      * Adds an entry with the given customer id
+     * optionally age over
      *
      * @param int $customer_id
+     * @param int $ageOver
      * @return bool
      */
-    public static function addSwissidCustomer($customer_id)
+    public static function addSwissidCustomer($customer_id, $ageOver = 0)
     {
         if (empty($customer_id) || $customer_id == null) {
             return false;
         }
         try {
             $sql = '
-            INSERT INTO `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] . '` (`id_customer`)
-            VALUES (' . (int)$customer_id . ')';
+            INSERT INTO `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] . '` (`id_customer`, `age_over`)
+            VALUES (' . (int)$customer_id . ', ' . (int)$ageOver . ')';
             return Db::getInstance()->execute($sql);
         } catch (Exception $exception) {
             return false;

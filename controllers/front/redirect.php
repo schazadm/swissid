@@ -12,6 +12,7 @@ require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
 class SwissidRedirectModuleFrontController extends ModuleFrontController
 {
     const COOKIE_ACTION_TYPE = 'redirect_action_type';
+    const COOKIE_ERROR_RESPONSE = 'redirect_error_response';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -51,22 +52,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
         // TODO: Change when environment changes
         $this->environment = 'PRE';
-    }
-
-    /**
-     * Tries to instantiate a {@link SwissIDConnector} object
-     * with the RP-specific configuration for further operations
-     *
-     * @throws PrestaShopException
-     */
-    private function connectToSwissID()
-    {
-        try {
-            $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
-            $this->checkForConnectorError();
-        } catch (Exception | PrestaShopException $e) {
-            $this->showError($e->getMessage());
-        }
     }
 
     /**
@@ -114,6 +99,96 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * Tries to instantiate a {@link SwissIDConnector} object
+     * with the RP-specific configuration for further operations
+     *
+     * @throws PrestaShopException
+     */
+    private function connectToSwissID()
+    {
+        try {
+            $eR = $this->context->cookie->__get(self::COOKIE_ERROR_RESPONSE);
+            $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
+            if ($eR != null && $eR) {
+                // $this->swissIDConnector->refreshAccessToken();
+                $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, false);
+            }
+            $this->checkForConnectorError();
+        } catch (Exception | PrestaShopException $e) {
+            $this->showError($e->getMessage());
+        }
+    }
+
+    /**
+     * Checks if the connector has error and tries to handle it
+     *
+     * @throws PrestaShopException
+     */
+    private function checkForConnectorError()
+    {
+        try {
+            // TODO: set error messages
+            if ($this->swissIDConnector->hasError()) {
+                $error = $this->swissIDConnector->getError();
+                if ($error['type'] == 'swissid') {
+                    switch ($error['error']) {
+                        case 'authentication_cancelled':
+                            /**
+                             * Handle the end-user who cancelled the authentication
+                             */
+                            break;
+                        case 'interaction_required':
+                            /**
+                             * Handle the end-user who didn't authenticate
+                             */
+                            break;
+                        case 'invalid_client_id':
+                            /**
+                             * Handle the case in which the client_id was invalid
+                             */
+                            break;
+                        case 'redirect_uri_mismatch':
+                            /**
+                             * Handle the case in which the redirect URI was invalid
+                             */
+                            break;
+                        case 'general_error':
+                            /**
+                             * Handle the case of a general error
+                             */
+                            break;
+                        case 'manual_check_needed':
+                            /**
+                             * Handle the end-user who is subject to a manual verification
+                             */
+                            break;
+                        case 'cancelled_by_user':
+                            /**
+                             * Handle the end-user who cancelled the step-up
+                             */
+                            break;
+                        case 'access_denied':
+                            /**
+                             * Handle the end-user who didn't give consent
+                             */
+                            break;
+                    }
+                } elseif ($error['type'] == 'object') {
+                    /**
+                     * Handle the object's error if authentication failed
+                     */
+                }
+                // $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, true);
+                $this->responseError($error['error_description']);
+                // TODO: Change when debugging is done
+                // $this->showError(json_encode($error));
+            }
+        } catch (Exception $e) {
+            $this->showError($e->getMessage());
+        }
+    }
+
+    /**
      * @throws PrestaShopException
      * @throws Exception
      */
@@ -125,85 +200,12 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             case 'login':
                 $this->loginAction();
                 break;
-        }
-    }
-
-    /**
-     * @throws PrestaShopException
-     */
-    private function loginAction()
-    {
-        $this->connectToSwissID();
-        $this->swissIDConnector->completeAuthentication();
-        $this->checkForConnectorError();
-        // get the configuration
-        $configValues = $this->getConfigValues();
-        if ($configValues['SWISSID_AGE_VERIFICATION']) {
-            $this->requestHasUserSufficientQOR();
-        }
-        $rs = $this->swissIDConnector->getClaim('email');
-        $this->checkForConnectorError();
-        if (!empty($rs)) {
-            Tools::redirect(
-                $this->context->link->getModuleLink(
-                    $this->module->name,
-                    'authenticate',
-                    [
-                        'action' => 'login',
-                        'response' => $rs
-                    ],
-                    true
-                )
-            );
-        }
-        Tools::redirect(
-            $this->context->link->getModuleLink(
-                $this->module->name,
-                'authenticate',
-                [
-                    'error' => 'Response is empty.'
-                ],
-                true
-            )
-        );
-    }
-
-    /**
-     * @throws PrestaShopException
-     */
-    private function ageVerifyAction()
-    {
-        try {
-            $this->connectToSwissID();
-            $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
-            $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
-            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
-            $this->checkForConnectorError();
-            if (!empty($rs)) {
-                Tools::redirect(
-                    $this->context->link->getModuleLink(
-                        $this->module->name,
-                        'authenticate',
-                        [
-                            'action' => 'ageVerify',
-                            'response' => $rs
-                        ],
-                        true
-                    )
-                );
-            }
-            Tools::redirect(
-                $this->context->link->getModuleLink(
-                    $this->module->name,
-                    'authenticate',
-                    [
-                        'error' => 'Response is empty.'
-                    ],
-                    true
-                )
-            );
-        } catch (Exception $e) {
-            $this->showError($e->getMessage());
+            case 'register':
+                $this->requestRegistrationInformation();
+                break;
+            case 'ageVerify':
+                $this->ageVerifyAction();
+                break;
         }
     }
 
@@ -256,7 +258,74 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                  */
                 break;
         }
+        $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, true);
         $this->responseError(Tools::getValue('error_description'));
+    }
+
+    /**
+     * @throws PrestaShopException
+     */
+    private function loginAction()
+    {
+        $this->connectToSwissID();
+        $this->swissIDConnector->completeAuthentication();
+        $this->checkForConnectorError();
+        // get the configuration
+        $configValues = $this->getConfigValues();
+        if ($configValues['SWISSID_AGE_VERIFICATION']) {
+            $this->requestHasUserSufficientQOR();
+            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+        }
+        // $rs = $this->swissIDConnector->getClaim('email');
+        $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
+        $this->checkForConnectorError();
+        if (!empty($rs)) {
+            Tools::redirect(
+                $this->context->link->getModuleLink(
+                    $this->module->name,
+                    'authenticate',
+                    [
+                        'action' => 'login',
+                        'response' => $rs
+                    ],
+                    true
+                )
+            );
+        }
+        $this->responseError();
+    }
+
+    /**
+     * @throws PrestaShopException
+     */
+    private function ageVerifyAction()
+    {
+        try {
+            $this->connectToSwissID();
+            $this->swissIDConnector->completeAuthentication();
+            $this->requestHasUserSufficientQOR();
+            $this->checkForConnectorError();
+            $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
+            // $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
+            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+            $this->checkForConnectorError();
+            if (!empty($rs)) {
+                Tools::redirect(
+                    $this->context->link->getModuleLink(
+                        $this->module->name,
+                        'authenticate',
+                        [
+                            'action' => 'ageVerify',
+                            'response' => $rs
+                        ],
+                        true
+                    )
+                );
+            }
+            $this->responseError();
+        } catch (Exception $e) {
+            $this->showError($e->getMessage());
+        }
     }
 
     /**
@@ -292,6 +361,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $configValues = $this->getConfigValues();
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
                 $this->requestHasUserSufficientQOR();
+                $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
+                $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
             }
             $this->connectToSwissID();
             $rs['response']['gender'] = $this->swissIDConnector->getClaim('gender')['value'];
@@ -300,8 +371,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $rs['response']['lastname'] = $this->swissIDConnector->getClaim('family_name')['value'];
             $rs['response']['language'] = $this->swissIDConnector->getClaim('language')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
-            $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
-            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
             $this->checkForConnectorError();
             if (!empty($rs)) {
                 Tools::redirect(
@@ -335,84 +404,15 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             if (!is_null($rs = $this->swissIDConnector->getClaim('urn:swissid:qor')) && $rs['value'] == 'qor0') {
                 // Guide the end-user with QoR0 into a step-up process to attain QoR1
                 $nonce = bin2hex(random_bytes(8));
-                $this->swissIDConnector->stepUpQoR('qor1', $nonce);
+                $this->swissIDConnector->stepUpQoR('qor1', $nonce, null, null, 'qoa2');
                 $this->checkForConnectorError();
+                return false;
             }
-            $this->checkForConnectorError();
+            return true;
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
-        return true;
-    }
-
-    /**
-     * Checks if the connector has error and tries to handle it
-     *
-     * @throws PrestaShopException
-     */
-    private function checkForConnectorError()
-    {
-        try {
-            if ($this->swissIDConnector->hasError()) {
-                $error = $this->swissIDConnector->getError();
-                if ($error['type'] == 'swissid') {
-                    switch ($error['error']) {
-                        case 'authentication_cancelled':
-                            /**
-                             * Handle the end-user who cancelled the authentication
-                             */
-                            break;
-                        case 'interaction_required':
-                            /**
-                             * Handle the end-user who didn't authenticate
-                             */
-                            break;
-                        case 'invalid_client_id':
-                            /**
-                             * Handle the case in which the client_id was invalid
-                             */
-                            break;
-                        case 'redirect_uri_mismatch':
-                            /**
-                             * Handle the case in which the redirect URI was invalid
-                             */
-                            break;
-                        case 'general_error':
-                            /**
-                             * Handle the case of a general error
-                             */
-                            break;
-                        case 'manual_check_needed':
-                            /**
-                             * Handle the end-user who is subject to a manual verification
-                             */
-                            break;
-                        case 'cancelled_by_user':
-                            /**
-                             * Handle the end-user who cancelled the step-up
-                             */
-                            break;
-                        case 'access_denied':
-                            /**
-                             * Handle the end-user who didn't give consent
-                             */
-                            break;
-                    }
-                } elseif ($error['type'] == 'object') {
-                    /**
-                     * Handle the object's error if authentication failed
-                     */
-                }
-
-                // TODO: Change when debugging is done
-                $this->showError(json_encode($error));
-                // $this->setCookieErrorMessage($error);
-                // or
-                // $this->setCookieErrorMessage($this->module->l('An error occurred while trying to connect to SwissID.'));
-            }
-        } catch (Exception $e) {
-            $this->showError($e->getMessage());
-        }
+        return false;
     }
 
     /**
@@ -463,6 +463,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             } else {
                 Tools::displayError($errors);
             }
+        } else {
+            $this->responseError();
         }
     }
 
