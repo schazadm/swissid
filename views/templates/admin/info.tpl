@@ -3,17 +3,22 @@
     <div class="panel-heading">
         <i class="icon-info-circle"></i>
         {l s='SwissID RP Information' mod='swissid'}
-
-        <span class="pull-right">
-            <a id="swissid-panel-toggle" class="btn" data-toggle="collapse" data-target=".moduleConfig-content">
-                    <span class="icon-plus"></span>
-            </a>
-        </span>
     </div>
 
     <div class="row moduleConfig-header">
-        <div class="col-xs-12 text-left">
+        <div class="col-xs-12 col-md-3 text-left">
             <img src="{$module_dir|escape:'html':'UTF-8'}views/img/swissid_logo.svg" alt="SwissID Logo"/>
+        </div>
+        <div class="col-xs-12 col-md-9 text-left">
+            <h2>
+                {l s='To use this SwissID Authentication Module you must be a registered Relying Party (RP).' mod='swissid'}
+            </h2>
+            <h2>
+                {l s='The registration is done by SwissSign Group AG.' mod='swissid'}
+            </h2>
+            <a class="btn" data-toggle="collapse" data-target=".moduleConfig-content">
+                {l s='More Information' mod='swissid'}
+            </a>
         </div>
     </div>
 
@@ -22,29 +27,22 @@
 
         <div class="row">
             <div class="col-xs-12">
-                <b>{l s='Redirect-URL:' mod='swissid'}</b>
-                <pre>{$redirect_url}</pre>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-xs-12">
-                <h4>{l s='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor' mod='swissid'}</h4>
-                <ul class="ul-spaced">
-                    <li><strong>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</strong></li>
-                    <li>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</li>
-                    <li>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</li>
-                    <li>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</li>
-                    <li>{l s='Lorem ipsum dolor sit amet' mod='swissid'}</li>
-                </ul>
-
+                <h2>I. {l s='Registration' mod='swissid'}</h2>
+                <h4>
+                    1. {l s='Go to the official website of SwissID' mod='swissid'}
+                    <a href="https://www.swissid.ch/onboarding" target="_blank">swissid.ch/onboarding</a>
+                    {l s='to proceed with the registration.' mod='swissid'}
+                </h4>
                 <br/>
-
-                <p class="text-center">
-                    <strong>
-                        <a>{l s='Lorem ipsum dolor' mod='swissid' }</a>
-                    </strong>
-                </p>
+                <h4>
+                    2. {l s='In addition to the other information, you will also be asked to specify a so-called "Redirection-URL". You can use the URL listed below for the registration.' mod='swissid'}
+                </h4>
+                <b>{l s='Redirection-URL:' mod='swissid'}</b>
+                <pre>{$redirect_url}</pre>
+                <br/>
+                <h4>
+                    3. {l s='After you receive your "Client ID" and "Secret" (password) then you are ready to start with the configuration of the module.' mod='swissid'}
+                </h4>
             </div>
         </div>
     </div>
