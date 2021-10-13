@@ -12,7 +12,6 @@ require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
 class SwissidRedirectModuleFrontController extends ModuleFrontController
 {
     const COOKIE_ACTION_TYPE = 'redirect_action_type';
-    const COOKIE_ERROR_RESPONSE = 'redirect_error_response';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -35,7 +34,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     public function __construct()
     {
         parent::__construct();
-
+        // before the object is instantiated check essential values and abort if not available
         if (!$this->checkConfigValues()) {
             $errorMessage = "SwissID: Parameters are insufficient. Check configuration values again.";
             if (_PS_MODE_DEV_) {
@@ -65,8 +64,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         // whenever errors are send from 'swissID'
         if (Tools::getIsset('error')) {
             $this->processErrorResponse();
-            // $this->swissIDConnector->refreshAccessToken();
-            // $this->redirectToReferer();
         }
         // whenever responses are send from 'swissID'
         if (Tools::getIsset('code')) {
@@ -89,6 +86,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                         $this->ageVerifyAction();
                     }
                     break;
+                case 'connect':
+                    $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'connect');
+                    $this->requestUserAuthentication();
+                    break;
                 default:
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'none');
                     break;
@@ -107,12 +108,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private function connectToSwissID()
     {
         try {
-            $eR = $this->context->cookie->__get(self::COOKIE_ERROR_RESPONSE);
             $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
-            if ($eR != null && $eR) {
-                // $this->swissIDConnector->refreshAccessToken();
-                $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, false);
-            }
             $this->checkForConnectorError();
         } catch (Exception | PrestaShopException $e) {
             $this->showError($e->getMessage());
@@ -130,6 +126,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             // TODO: set error messages
             if ($this->swissIDConnector->hasError()) {
                 $error = $this->swissIDConnector->getError();
+                $errorDescription = $error['error_description'];
                 if ($error['type'] == 'swissid') {
                     switch ($error['error']) {
                         case 'authentication_cancelled':
@@ -178,9 +175,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                      * Handle the object's error if authentication failed
                      */
                 }
-                // $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, true);
-                $this->responseError($error['error_description']);
-                // TODO: Change when debugging is done
+                $this->responseError($errorDescription);
                 // $this->showError(json_encode($error));
             }
         } catch (Exception $e) {
@@ -198,6 +193,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         // switch based on cookie action type
         switch ($actionType) {
             case 'login':
+            case 'connect':
                 $this->loginAction();
                 break;
             case 'register':
@@ -258,7 +254,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                  */
                 break;
         }
-        $this->context->cookie->__set(self::COOKIE_ERROR_RESPONSE, true);
         $this->responseError(Tools::getValue('error_description'));
     }
 
@@ -276,16 +271,16 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $this->requestHasUserSufficientQOR();
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
         }
-        // $rs = $this->swissIDConnector->getClaim('email');
         $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
         $this->checkForConnectorError();
         if (!empty($rs)) {
+            $actionType = $this->context->cookie->__get(self::COOKIE_ACTION_TYPE);
             Tools::redirect(
                 $this->context->link->getModuleLink(
                     $this->module->name,
                     'authenticate',
                     [
-                        'action' => 'login',
+                        'action' => $actionType,
                         'response' => $rs
                     ],
                     true
@@ -306,7 +301,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $this->requestHasUserSufficientQOR();
             $this->checkForConnectorError();
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
-            // $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
+            $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
             $this->checkForConnectorError();
             if (!empty($rs)) {
@@ -339,7 +334,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         try {
             $scope = 'openid profile email';
             $qoa = null;
-            $qor = 'qor1';
+            $qor = 'qor0';
             $locale = (isset($this->context->language->iso_code)) ? $this->context->language->iso_code : 'en';
             $state2pass = null;
             $nonce = bin2hex(random_bytes(8));
@@ -360,14 +355,17 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             // get the configuration
             $configValues = $this->getConfigValues();
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
+                // lot1 request
                 $this->requestHasUserSufficientQOR();
+                // qor1 -> if available
                 $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+                $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
             }
             $this->connectToSwissID();
+            // qor0
             $rs['response']['gender'] = $this->swissIDConnector->getClaim('gender')['value'];
             $rs['response']['firstname'] = $this->swissIDConnector->getClaim('given_name')['value'];
-            $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
             $rs['response']['lastname'] = $this->swissIDConnector->getClaim('family_name')['value'];
             $rs['response']['language'] = $this->swissIDConnector->getClaim('language')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
