@@ -375,8 +375,6 @@ class SwissIDConnector
                             return;
                         } else {
                             $this->keys = $keysDecoded;
-
-
                         }
                     }
                 }
@@ -390,7 +388,7 @@ class SwissIDConnector
      *
      * @return bool
      */
-    public function refreshAccessToken(): bool
+    private function refreshAccessToken(): bool
     {
         if (is_null($this->refreshToken)) {
             /**
