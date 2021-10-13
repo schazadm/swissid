@@ -236,14 +236,14 @@ class Swissid extends Module
     {
         $action = 'connect';
         $linked = false;
-        $age_over = false;
+        $ageOver = false;
         if (isset($this->context->customer->id)) {
             if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
                 $action = 'disconnect';
                 $linked = true;
             }
             if (SwissidCustomer::isCustomerAgeOver($this->context->customer->id)) {
-                $age_over = true;
+                $ageOver = true;
             }
         }
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
@@ -255,7 +255,7 @@ class Swissid extends Module
                 ], true),
                 'img_dir_url' => $this->_path . 'views/img',
                 'linked' => $linked,
-                'age_over' => $age_over,
+                'age_over' => $ageOver,
                 'age_verification' => Configuration::get('SWISSID_AGE_VERIFICATION'),
                 'age_verification_optional' => Configuration::get('SWISSID_AGE_VERIFICATION_OPTIONAL'),
                 'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
