@@ -175,8 +175,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         $this->redirectWithNotifications($this->getRedirectPage());
                     }
                 }
+                $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID');
             }
-            $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account. Please try again.');
+            $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account.');
             $this->redirectWithNotifications($this->getRedirectPage(true));
         } else {
             Tools::redirect(
