@@ -211,6 +211,10 @@ class Swissid extends Module
      */
     private function getAgeVerifyModal()
     {
+        $isAgeOver = null;
+        if (Tools::getIsset('isAgeOver')) {
+            $isAgeOver = Tools::getValue('isAgeOver');
+        }
         return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-age-verification-modal.tpl',
             [
                 'show' => true,
@@ -220,9 +224,10 @@ class Swissid extends Module
                 'age_verification_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
                     'action' => 'ageVerify',
                     'redirect_s' => $this->context->link->getPageLink('order'),
-                    'redirect_e' => $this->context->link->getPageLink('order')
+                    'redirect_e' => $this->context->link->getPageLink('cart')
                 ], true),
                 'age_verification_text' => $this->getAgeVerificationText(),
+                'isAgeOver' => $isAgeOver
             ]
         );
     }
@@ -349,7 +354,6 @@ class Swissid extends Module
      * hook to react if a customer is deleted from the shop by the merchant
      *
      * @param $params
-     *
      * @return bool
      */
     public function hookActionObjectCustomerDeleteAfter($params)

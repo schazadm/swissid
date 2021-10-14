@@ -85,10 +85,10 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 'width' => 'auto',
                 'filter_key' => 'cu!email'
             ],
-            'active' => [
-                'title' => $this->trans('Active', [], 'Admin.Global'),
+            'age_over' => [
+                'title' => $this->module->l('Age Over'),
                 'width' => 'auto',
-                'filter_key' => 'cu!active'
+                'filter_key' => 'a!age_over'
             ],
         ];
 

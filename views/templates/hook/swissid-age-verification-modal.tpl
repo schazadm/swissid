@@ -46,7 +46,11 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">
-                    {l s='Verify your Age with the help of SwissID' mod='swissid'}
+                    {if isset($isAgeOver) && !$isAgeOver}
+                        {l s='You cannot proceed with the checkout' mod='swissid'}
+                    {else}
+                        {l s='Verify your Age with the help of SwissID' mod='swissid'}
+                    {/if}
                 </h4>
                 {if !isset($show)}
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -57,10 +61,22 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-5 divide-right logo-container">
-                        <img class="logo img-responsive" src="{$img_dir_url}/swissid_logo.svg" alt="SwissID Logo">
+                        {if isset($isAgeOver) && !$isAgeOver}
+                            <img class="logo img-responsive" src="{$img_dir_url}/-18.png" alt="SwissID Logo"
+                                 style="width: 100px;"
+                            >
+                        {else}
+                            <img class="logo img-responsive" src="{$img_dir_url}/swissid_logo.svg" alt="SwissID Logo">
+                        {/if}
                     </div>
                     <div class="col-md-7">
-                        <p>{$age_verification_text|nl2br nofilter}</p>
+                        <p>
+                            {if isset($isAgeOver) && !$isAgeOver}
+                                {l s='Unfortunately, because you are not over 18 years old, you will not be able to complete the checkout process.' mod='swissid'}
+                            {else}
+                                {$age_verification_text|nl2br nofilter}
+                            {/if}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -78,6 +94,11 @@
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             {l s='Skip verification' mod='swissid'}
                         </button>
+                    {/if}
+                    {if isset($isAgeOver) && !$isAgeOver}
+                        <a href="/" class="btn btn-secondary">
+                            {l s='Back to the Homepage' mod='swissid'}
+                        </a>
                     {/if}
                 </form>
             </div>

@@ -120,6 +120,9 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         try {
             $secretPlainText = Tools::getValue('SWISSID_CLIENT_SECRET');
+            if (strlen($secretPlainText) < 25) {
+                $this->errors[] = $this->module->l('The secret length is incorrect.');
+            }
             $cipher = (new PhpEncryption(_NEW_COOKIE_KEY_))->encrypt($secretPlainText);
             $_POST['SWISSID_CLIENT_SECRET'] = $cipher;
         } catch (Exception $e) {

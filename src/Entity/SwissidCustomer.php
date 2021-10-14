@@ -38,7 +38,7 @@ class SwissidCustomer extends ObjectModel
      */
     public static function isCustomerLinkedById($customer_id)
     {
-        if (empty($customer_id) || $customer_id == null) {
+        if (!self::checkCustomerId($customer_id)) {
             return false;
         }
         try {
@@ -61,7 +61,7 @@ class SwissidCustomer extends ObjectModel
      */
     public static function isCustomerAgeOver($customer_id)
     {
-        if (empty($customer_id) || $customer_id == null) {
+        if (!self::checkCustomerId($customer_id)) {
             return false;
         }
         try {
@@ -78,6 +78,29 @@ class SwissidCustomer extends ObjectModel
     }
 
     /**
+     * Updates the age over of the given customer
+     *
+     * @param int $customer_id
+     * @param $ageOver
+     * @return bool
+     */
+    public static function updateCustomerAgeOver($customer_id, $ageOver)
+    {
+        if (!self::checkCustomerId($customer_id)) {
+            return false;
+        }
+        try {
+            $sql = '
+            UPDATE `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] .
+                '` SET `age_over`=' . (int)$ageOver .
+                ' WHERE `id_customer`=' . (int)$customer_id;
+            return Db::getInstance()->execute($sql);
+        } catch (Exception $exception) {
+            return false;
+        }
+    }
+
+    /**
      * Adds an entry with the given customer id
      * optionally age over
      *
@@ -87,7 +110,7 @@ class SwissidCustomer extends ObjectModel
      */
     public static function addSwissidCustomer($customer_id, $ageOver = 0)
     {
-        if (empty($customer_id) || $customer_id == null) {
+        if (!self::checkCustomerId($customer_id)) {
             return false;
         }
         try {
@@ -108,7 +131,7 @@ class SwissidCustomer extends ObjectModel
      */
     public static function removeSwissidCustomerByCustomerId($customer_id)
     {
-        if (empty($customer_id) || $customer_id == null) {
+        if (!self::checkCustomerId($customer_id)) {
             return false;
         }
         try {
@@ -119,5 +142,19 @@ class SwissidCustomer extends ObjectModel
         } catch (Exception $exception) {
             return false;
         }
+    }
+
+    /**
+     * Checks the given customer id if it's not empty or null
+     *
+     * @param $customer_id
+     * @return bool
+     */
+    private static function checkCustomerId($customer_id)
+    {
+        if (empty($customer_id) || $customer_id == null) {
+            return false;
+        }
+        return true;
     }
 }

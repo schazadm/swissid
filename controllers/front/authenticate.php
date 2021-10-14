@@ -9,6 +9,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
 {
     const COOKIE_HTTP_REF_S = 'redirect_http_ref_s';
     const COOKIE_HTTP_REF_E = 'redirect_http_ref_e';
+    const AGE_OVER_FLAG = '18';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -77,12 +78,15 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function loginAction()
     {
         if (Tools::getIsset('response')) {
-            // $rs = Tools::getValue('response');
             $rs = Tools::getValue('response')['response'];
             if (isset($rs['email']) && !empty($rs['email'])) {
                 $ageOver = null;
                 if (isset($rs['age_over']) && !empty($rs['age_over'])) {
-                    $ageOver = $rs['age_over'];
+                    $ageOverFlag = $rs['age_over'];
+                    // only accept >18 (>16 and <18 is not accepted)
+                    if ($ageOverFlag == self::AGE_OVER_FLAG) {
+                        $ageOver = 1;
+                    }
                 }
                 // authenticate with the given mail address
                 if (!$this->authenticateCustomer($rs['email'], $ageOver)) {
@@ -138,7 +142,11 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
             $ageOver = 0;
             if (isset($rs['age_over']) && !empty($rs['age_over'])) {
-                $ageOver = $rs['age_over'];
+                $ageOverFlag = $rs['age_over'];
+                // only accept >18 (>16 and <18 is not accepted)
+                if ($ageOverFlag == self::AGE_OVER_FLAG) {
+                    $ageOver = 1;
+                }
             }
             // add newly created customer to swissID table
             SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
@@ -176,8 +184,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     }
                 }
                 $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID');
+            } else {
+                $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account.');
             }
-            $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account.');
             $this->redirectWithNotifications($this->getRedirectPage(true));
         } else {
             Tools::redirect(
@@ -207,16 +216,63 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * @todo implement function
+     *
      */
     public function ageVerificationAction()
     {
+        if (!isset($this->context->customer->id)) {
+            $this->errors[] = $this->module->l('An error occurred while trying to handle your request.');
+            $this->redirectWithNotifications($this->getRedirectPage(true));
+        }
         if (Tools::getIsset('response')) {
             $rs = Tools::getValue('response')['response'];
-            // TODO: do this only if local account exists else just verify -> add COOKIE_GUEST_VERIFY = true
-            // TODO: based on the response check if already exists in the swissid table
-            // if not add new entry with age over attribute
-            // if exists then only alter age over attribute
+            // check if email is set in the response and is not empty
+            if (isset($rs['email']) && !empty($rs['email'])) {
+                // check if the received email is the same as the local email
+                if ($rs['email'] == $this->context->customer->email) {
+                    // check the age over flag
+                    if (isset($rs['age_over']) && !empty($rs['age_over'])) {
+                        $ageOverFlag = $rs['age_over'];
+                        $ageOver = 0;
+                        // only accept >18 (>16 and <18 is not accepted)
+                        if ($ageOverFlag == self::AGE_OVER_FLAG) {
+                            $ageOver = 1;
+                        }
+                        // check whether the customer is already linked in the swissid table
+                        if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
+                            // try to update the existing entry
+                            if (!SwissidCustomer::updateCustomerAgeOver($this->context->customer->id, $ageOver)) {
+                                $this->errors[] = $this->module->l('An error occurred while processing the age verification.');
+                            }
+                        } else {
+                            // try to add the SwissID customer entry
+                            if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $ageOver)) {
+                                $this->info[] = $this->module->l('Your local account was also linked to your SwissID account. You are now able to login with your SwissID.');
+                            }
+                        }
+                        if (isset($rs['birthday']) && !empty($rs['birthday'])) {
+                            // save the birth date
+                            $this->saveDateOfBirth($rs['birthday']);
+                        }
+                        $isAgeOver = ($ageOver == 1) ? true : false;
+                        if ($isAgeOver) {
+                            $this->info[] = $this->module->l('Your age has been verified.');
+                        }
+                        $query = [
+                            'isAgeOver' => $isAgeOver
+                        ];
+                        // return to the success redirection
+                        $this->redirectWithNotifications($this->getRedirectPage() . '?' . http_build_query($query));
+                    } else {
+                        $this->errors[] = $this->module->l('A technical error occurred trying to request an age verification.');
+                    }
+                } else {
+                    $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID');
+                }
+            } else {
+                $this->errors[] = $this->module->l('An error occurred while verifying your age.');
+            }
+            $this->redirectWithNotifications($this->getRedirectPage(true));
         } else {
             Tools::redirect(
                 $this->context->link->getModuleLink(
@@ -265,6 +321,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
                 } else {
                     SwissidCustomer::addSwissidCustomer($customer->id);
+                }
+            } else {
+                if ($ageOver != null) {
+                    SwissidCustomer::updateCustomerAgeOver($customer->id, $ageOver);
                 }
             }
             $this->updateCustomer($customer);
@@ -315,6 +375,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
             $customer->id_lang = $id_lang;
             $customer->email = $data['email'];
+            if (isset($data['birthday']) && !empty($data['birthday'])) {
+                $customer->birthday = $data['birthday'];
+            }
             return $customer;
         } catch (Exception $e) {
             return null;
@@ -353,5 +416,27 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
         }
         return $r;
+    }
+
+    /**
+     * Tries to save the given date of birth of the current customer
+     *
+     * @param $birthday
+     * @return bool
+     */
+    private function saveDateOfBirth($birthday)
+    {
+        if (!isset($this->context->customer->id)) {
+            return false;
+        }
+        if (isset($birthday) && !empty($birthday)) {
+            $this->context->customer->birthday = $birthday;
+            try {
+                $this->context->customer->update();
+            } catch (PrestaShopDatabaseException | PrestaShopException $e) {
+                return false;
+            }
+        }
+        return true;
     }
 }

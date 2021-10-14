@@ -13,7 +13,6 @@
                        size="{if isset($field['size'])}{$field['size']|intval}{else}5{/if}"
                        name="{$key}"
                        value="PLACEHOLDER"
-                        {if isset($field['autocomplete']) && !$field['autocomplete']} autocomplete="off"{/if}
                 />
                 {if isset($field['suffix'])}
                     <span class="input-group-addon">{$field['suffix']|strval}</span>

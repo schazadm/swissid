@@ -51,6 +51,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->redirectURL = $configValues['SWISSID_REDIRECT_URL'];
         // TODO: Change when environment changes
         $this->environment = 'PRE';
+        // set-up the connection
+        $this->connectToSwissID();
     }
 
     /**
@@ -82,9 +84,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                     break;
                 case 'ageVerify':
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'ageVerify');
-                    if ($this->requestHasUserSufficientQOR()) {
-                        $this->ageVerifyAction();
-                    }
+                    $this->requestUserAuthentication();
+                    // if ($this->requestHasUserSufficientQOR()) {
+                    //     $this->ageVerifyAction();
+                    // }
                     break;
                 case 'connect':
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'connect');
@@ -175,7 +178,9 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                      * Handle the object's error if authentication failed
                      */
                 }
-                $this->responseError($errorDescription);
+                // TODO: suggestion don't interrupt the flow -> only interrupt if response is an error
+                // $this->responseError($errorDescription);
+                // TODO: remove when debugging is done
                 // $this->showError(json_encode($error));
             }
         } catch (Exception $e) {
@@ -262,7 +267,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      */
     private function loginAction()
     {
-        $this->connectToSwissID();
         $this->swissIDConnector->completeAuthentication();
         $this->checkForConnectorError();
         // get the configuration
@@ -296,7 +300,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private function ageVerifyAction()
     {
         try {
-            $this->connectToSwissID();
             $this->swissIDConnector->completeAuthentication();
             $this->requestHasUserSufficientQOR();
             $this->checkForConnectorError();
@@ -334,11 +337,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         try {
             $scope = 'openid profile email';
             $qoa = null;
-            $qor = 'qor0';
+            $qor = 'qor1';
             $locale = (isset($this->context->language->iso_code)) ? $this->context->language->iso_code : 'en';
             $state2pass = null;
             $nonce = bin2hex(random_bytes(8));
-            $this->connectToSwissID();
             $this->swissIDConnector->authenticate($scope, $qoa, $qor, $locale, $state2pass, $nonce);
             $this->checkForConnectorError();
         } catch (Exception $e) {
@@ -360,9 +362,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 // qor1 -> if available
                 $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
-                $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
+                // $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
             }
-            $this->connectToSwissID();
             // qor0
             $rs['response']['gender'] = $this->swissIDConnector->getClaim('gender')['value'];
             $rs['response']['firstname'] = $this->swissIDConnector->getClaim('given_name')['value'];
@@ -398,15 +399,18 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private function requestHasUserSufficientQOR()
     {
         try {
-            $this->connectToSwissID();
-            if (!is_null($rs = $this->swissIDConnector->getClaim('urn:swissid:qor')) && $rs['value'] == 'qor0') {
-                // Guide the end-user with QoR0 into a step-up process to attain QoR1
-                $nonce = bin2hex(random_bytes(8));
-                $this->swissIDConnector->stepUpQoR('qor1', $nonce, null, null, 'qoa2');
-                $this->checkForConnectorError();
+            $rs = $this->swissIDConnector->getClaim('urn:swissid:qor');
+            if (is_null($rs)) {
                 return false;
             }
-            return true;
+            if ($rs['value'] == 'qor1') {
+                return true;
+            }
+            if ($rs['value'] == 'qor0') {
+                // Guide the end-user with QoR0 into a step-up process to attain QoR1
+                $this->swissIDConnector->stepUpQoR('qor1');
+                $this->checkForConnectorError();
+            }
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
