@@ -58,7 +58,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     /**
      * POST entry of the controller
      *
-     * @throws PrestaShopException
      * @throws Exception
      */
     public function postProcess()
@@ -102,93 +101,16 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     /**
      * Tries to instantiate a {@link SwissIDConnector} object
      * with the RP-specific configuration for further operations
-     *
-     * @throws PrestaShopException
      */
     private function connectToSwissID()
     {
         try {
             $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
-            $this->checkForConnectorError();
-        } catch (Exception | PrestaShopException $e) {
-            $this->showError($e->getMessage());
-        }
-    }
-
-    /**
-     * Checks if the connector has error and tries to handle it
-     *
-     * @throws PrestaShopException
-     */
-    private function checkForConnectorError()
-    {
-        try {
-            // TODO: set error messages
-            if ($this->swissIDConnector->hasError()) {
-                $error = $this->swissIDConnector->getError();
-                $errorDescription = $error['error_description'];
-                if ($error['type'] == 'swissid') {
-                    switch ($error['error']) {
-                        case 'authentication_cancelled':
-                            /**
-                             * Handle the end-user who cancelled the authentication
-                             */
-                            break;
-                        case 'interaction_required':
-                            /**
-                             * Handle the end-user who didn't authenticate
-                             */
-                            break;
-                        case 'invalid_client_id':
-                            /**
-                             * Handle the case in which the client_id was invalid
-                             */
-                            break;
-                        case 'redirect_uri_mismatch':
-                            /**
-                             * Handle the case in which the redirect URI was invalid
-                             */
-                            break;
-                        case 'general_error':
-                            /**
-                             * Handle the case of a general error
-                             */
-                            break;
-                        case 'manual_check_needed':
-                            /**
-                             * Handle the end-user who is subject to a manual verification
-                             */
-                            break;
-                        case 'cancelled_by_user':
-                            /**
-                             * Handle the end-user who cancelled the step-up
-                             */
-                            break;
-                        case 'access_denied':
-                            /**
-                             * Handle the end-user who didn't give consent
-                             */
-                            break;
-                    }
-                } elseif ($error['type'] == 'object') {
-                    /**
-                     * Handle the object's error if authentication failed
-                     */
-                }
-                // TODO: suggestion don't interrupt the flow -> only interrupt if response is an error
-                // $this->responseError($errorDescription);
-                // TODO: remove when debugging is done
-                // $this->showError(json_encode($error));
-            }
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
     }
 
-    /**
-     * @throws PrestaShopException
-     * @throws Exception
-     */
     private function processCodeResponse()
     {
         $actionType = $this->context->cookie->__get(self::COOKIE_ACTION_TYPE);
@@ -207,9 +129,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         }
     }
 
-    /**
-     * @throws Exception
-     */
     private function processErrorResponse()
     {
         $errorDesc = $this->module->l('An error occurred while trying to handle your request.');
@@ -241,51 +160,45 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         $this->responseError($errorDesc);
     }
 
-    /**
-     * @throws PrestaShopException
-     */
     private function loginAction()
     {
-        $this->swissIDConnector->completeAuthentication();
-        $this->checkForConnectorError();
-        // get the configuration
-        $configValues = $this->getConfigValues();
-        if ($configValues['SWISSID_AGE_VERIFICATION']) {
-            $this->requestHasUserSufficientQOR();
-            $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+        try {
+            $this->swissIDConnector->completeAuthentication();
+            // get the configuration
+            $configValues = $this->getConfigValues();
+            if ($configValues['SWISSID_AGE_VERIFICATION']) {
+                $this->requestHasUserSufficientQOR();
+                $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
+            }
+            $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
+            if (!empty($rs)) {
+                $actionType = $this->context->cookie->__get(self::COOKIE_ACTION_TYPE);
+                Tools::redirect(
+                    $this->context->link->getModuleLink(
+                        $this->module->name,
+                        'authenticate',
+                        [
+                            'action' => $actionType,
+                            'response' => $rs
+                        ],
+                        true
+                    )
+                );
+            }
+            $this->responseError();
+        } catch (Exception $e) {
+            $this->showError($e->getMessage());
         }
-        $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
-        $this->checkForConnectorError();
-        if (!empty($rs)) {
-            $actionType = $this->context->cookie->__get(self::COOKIE_ACTION_TYPE);
-            Tools::redirect(
-                $this->context->link->getModuleLink(
-                    $this->module->name,
-                    'authenticate',
-                    [
-                        'action' => $actionType,
-                        'response' => $rs
-                    ],
-                    true
-                )
-            );
-        }
-        $this->responseError();
     }
 
-    /**
-     * @throws PrestaShopException
-     */
     private function ageVerifyAction()
     {
         try {
             $this->swissIDConnector->completeAuthentication();
             $this->requestHasUserSufficientQOR();
-            $this->checkForConnectorError();
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
             $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
-            $this->checkForConnectorError();
             if (!empty($rs)) {
                 Tools::redirect(
                     $this->context->link->getModuleLink(
@@ -308,7 +221,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     /**
      * Tries to authenticate an end-user by the help of the {@link SwissIDConnector}
      *
-     * @throws PrestaShopException
      * @throws Exception
      */
     private function requestUserAuthentication()
@@ -323,15 +235,11 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $state2pass = null;
             $nonce = bin2hex(random_bytes(8));
             $this->swissIDConnector->authenticate($scope, $qoa, $qor, $locale, $state2pass, $nonce);
-            $this->checkForConnectorError();
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
     }
 
-    /**
-     * @throws PrestaShopException
-     */
     private function requestRegistrationInformation()
     {
         try {
@@ -351,7 +259,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $rs['response']['lastname'] = $this->swissIDConnector->getClaim('family_name')['value'];
             $rs['response']['language'] = $this->swissIDConnector->getClaim('language')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
-            $this->checkForConnectorError();
             if (!empty($rs)) {
                 Tools::redirect(
                     $this->context->link->getModuleLink(
@@ -365,7 +272,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                     )
                 );
             }
-            $this->responseError('Response is empty');
+            $this->responseError();
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
@@ -374,8 +281,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     /**
      * Determine if the end-user has the required Quality of Registration
      * and initiate a step-up if this is not the case
-     *
-     * @throws PrestaShopException
      */
     private function requestHasUserSufficientQOR()
     {
@@ -390,7 +295,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             if ($rs['value'] == 'qor0') {
                 // Guide the end-user with QoR0 into a step-up process to attain QoR1
                 $this->swissIDConnector->stepUpQoR('qor1');
-                $this->checkForConnectorError();
             }
         } catch (Exception $e) {
             $this->showError($e->getMessage());
@@ -436,18 +340,19 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      * Shows error if the PS Dev is on
      *
      * @param string $errors
-     * @throws PrestaShopException
      */
     private function showError($errors)
     {
-        if (_PS_MODE_DEV_) {
-            if (is_array($errors)) {
-                Tools::displayError(json_encode($errors));
-            } else {
-                Tools::displayError($errors);
+        try {
+            if (_PS_MODE_DEV_) {
+                if (is_array($errors)) {
+                    Tools::displayError(json_encode($errors));
+                } else {
+                    Tools::displayError($errors);
+                }
             }
-        } else {
-            $this->responseError();
+        } catch (Exception | PrestaShopException $e) {
+            echo $e->getMessage();
         }
     }
 
