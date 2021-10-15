@@ -11,6 +11,7 @@
 
 namespace OSR\Swissid\Connector;
 
+use Exception;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\JWK;
 
@@ -25,7 +26,6 @@ use \Firebase\JWT\JWK;
  */
 class SwissIDConnector
 {
-
     /**
      * The RP's client_id
      *
@@ -238,6 +238,7 @@ class SwissIDConnector
      * @param string $accessToken A previously obtained and securely stored access token
      * @param int $accessTokenExpirationTimestamp The expiration timestamp of a previously obtained and securely stored access token
      * @param string $refreshToken A previously obtained and securely stored refresh token
+     * @throws Exception
      */
     public function __construct(string $clientID = null, string $clientSecret = null, string $redirectURI = null, string $environment = null, $accessToken = null, $accessTokenExpirationTimestamp = null, $refreshToken = null)
     {
@@ -254,13 +255,7 @@ class SwissIDConnector
              * and too few parameters have been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'Too few parameters have been specified',
-            );
-            return;
+            throw new Exception('Too few parameters have been specified');
         }
 
         if (isset($_SESSION[get_class($this)])) {
@@ -303,13 +298,7 @@ class SwissIDConnector
                  * If an invalid environment parameter has been specified,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'The environment parameter is invalid. Valid values are ' . $rs['allowedValues']
-                );
-                return;
+                throw new Exception('The environment parameter is invalid. Valid values are ' . $rs['allowedValues']);
             }
 
             if (!$openidConfigurationEncoded = file_get_contents($this->openidConfigurationEndpoints[$environment])) {
@@ -317,26 +306,14 @@ class SwissIDConnector
                  * If SwissID's OpenID configuration could not be read,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'An error has occurred while trying to read the openid configuration'
-                );
-                return;
+                throw new Exception('An error has occurred while trying to read the openid configuration');
             } else {
                 if (!$openidConfigurationDecoded = json_decode($openidConfigurationEncoded, $associativeP = true)) {
                     /**
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
                      */
-                    $this->error = array(
-                        'line' => __LINE__,
-                        'type' => 'object',
-                        'error' => json_last_error(),
-                        'error_description' => json_last_error_msg()
-                    );
-                    return;
+                    throw new Exception(json_last_error_msg());
                 } else {
                     /**
                      * On success, update the class member variables
@@ -353,26 +330,14 @@ class SwissIDConnector
                          * If SwissID's OpenID configuration could not be read,
                          * return an error
                          */
-                        $this->error = array(
-                            'line' => __LINE__,
-                            'type' => 'object',
-                            'error' => '',
-                            'error_description' => 'An error has occurred while trying to read the keys'
-                        );
-                        return;
+                        throw new Exception('An error has occurred while trying to read the keys');
                     } else {
                         if (!$keysDecoded = json_decode($keysEncoded, $associativeP = true)) {
                             /**
                              * If an error has occurred while trying to decode the JSON response,
                              * return an error
                              */
-                            $this->error = array(
-                                'line' => __LINE__,
-                                'type' => 'object',
-                                'error' => json_last_error(),
-                                'error_description' => json_last_error_msg()
-                            );
-                            return;
+                            throw new Exception(json_last_error_msg());
                         } else {
                             $this->keys = $keysDecoded;
                         }
@@ -380,13 +345,14 @@ class SwissIDConnector
                 }
             }
         }
-        return;
+        return null;
     }
 
     /**
      * Method to obtain a new access token on the basis of an access token
      *
      * @return bool
+     * @throws Exception
      */
     private function refreshAccessToken(): bool
     {
@@ -395,13 +361,7 @@ class SwissIDConnector
              * If no refresh token is available,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'There is no refresh token available'
-            );
-            return false;
+            throw new Exception('There is no refresh token available');
         }
 
         /**
@@ -429,13 +389,7 @@ class SwissIDConnector
              * If the http status was different from 200,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object - scope ' . $this->scope,
-                'error' => null,
-                'error_description' => 'Unexpected http status ' . $httpStatus . ' - ' . $rs
-            );
-            return false;
+            throw new Exception('Unexpected http status ' . $httpStatus . ' - ' . $rs);
         }
 
         if (!$rs2 = json_decode($rs, $associativeP = true)) {
@@ -443,13 +397,7 @@ class SwissIDConnector
              * If an error has occurred while trying to decode the JSON response,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => json_last_error(),
-                'error_description' => json_last_error_msg()
-            );
-            return false;
+            throw new Exception(json_last_error_msg());
         }
 
         /**
@@ -458,7 +406,6 @@ class SwissIDConnector
         $this->accessToken = $rs2['access_token'];
         $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
         $this->refreshToken = $rs2['refresh_token'];
-
         return true;
     }
 
@@ -473,6 +420,7 @@ class SwissIDConnector
      * @param string $type The type of parameter to verify. Valid values are 'environment', 'scope', 'qoa', 'qor', 'locale', 'login_hint', 'prompt', 'maxAge', 'tokenType'
      * @param string $value the value to verify for the parameter specified
      * @return array|null
+     * @throws Exception
      */
     private function verifyParameter(string $type, $value): ?array
     {
@@ -481,13 +429,7 @@ class SwissIDConnector
              * If an invalid type has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The type parameter "' . $type . '" is invalid. Valid values are environment, scope, qoa, qor, locale, prompt, maxAge'
-            );
-            return null;
+            throw new Exception('The type parameter "' . $type . '" is invalid. Valid values are environment, scope, qoa, qor, locale, prompt, maxAge');
         }
 
         switch ($type) {
@@ -576,60 +518,31 @@ class SwissIDConnector
                  * If an unknown error type of parameter was specified,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'An unknown type of parameter was specified. Valid values are scope, qoa, qor, locale, prompt, maxAge'
-                );
-                return null;
+                throw new Exception('An unknown type of parameter was specified. Valid values are scope, qoa, qor, locale, prompt, maxAge');
                 break;
         }
-        /**
-         * If an unknown error has occurred,
-         * return an error
-         */
-        $this->error = array(
-            'line' => __LINE__,
-            'type' => 'object',
-            'error' => '',
-            'error_description' => 'An unknown has occured while trying to verify the parameter'
-        );
-        return null;
     }
 
     /**
      * Method to complete the authentication of the end-user
      *
      * If an error has occurred, this method returns false, otherwise true
+     * @throws Exception
      */
     public function completeAuthentication(): bool
     {
-
         if (!$this->connectorInitialized) {
             /**
              * If this object was not correctly initialized,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'This object was not correctly initialized'
-            );
-            return false;
+            throw new Exception('This object was not correctly initialized');
         } elseif (!$this->authenticationInitialized) {
             /**
              * If this object was correctly initialized,
              * but the authentication was not initialized,
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The authentication was not initialized'
-            );
-            return false;
+            throw new Exception('The authentication was not initialized');
         } elseif (!$this->authenticated) {
             /**
              * If this object was correctly initialized,
@@ -642,13 +555,7 @@ class SwissIDConnector
                  * If an error occurred while trying to complete the authentication,
                  * relay the error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'swissid',
-                    'error' => $_GET['error'],
-                    'error_description' => $_GET['error_description']
-                );
-                return false;
+                throw new Exception($_GET['error_description']);
             } elseif (isset($_GET['code'])) {
                 /**
                  * If an authorization code was obtained,
@@ -677,13 +584,7 @@ class SwissIDConnector
                      * If the http status was different from 200,
                      * return an error
                      */
-                    $this->error = array(
-                        'line' => __LINE__,
-                        'type' => 'object',
-                        'error' => null,
-                        'error_description' => 'Unexpected http status ' . $httpStatus
-                    );
-                    return false;
+                    throw new Exception('Unexpected http status ' . $httpStatus);
                 }
 
                 if (!$rs2 = json_decode($rs, $associativeP = true)) {
@@ -691,13 +592,7 @@ class SwissIDConnector
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
                      */
-                    $this->error = array(
-                        'line' => __LINE__,
-                        'type' => 'object',
-                        'error' => json_last_error(),
-                        'error_description' => json_last_error_msg()
-                    );
-                    return false;
+                    throw new Exception(json_last_error_msg());
                 }
 
                 /**
@@ -730,13 +625,7 @@ class SwissIDConnector
                  * If no authorization code was obtained,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'No authorization code could be obtained'
-                );
-                return false;
+                throw new Exception('No authorization code could be obtained');
             } else {
                 /**
                  * If an unknown error has occurred,
@@ -778,6 +667,7 @@ class SwissIDConnector
      * @param string $prompt Whether and for what the IdP should prompt the end-user. Valid values are 'none', 'login', 'consent'
      * @param int $maxAge The allowable elapsed time in seconds since the last time the end-user was actively authenticated. A valid value is an integer >= 0
      * @return void
+     * @throws Exception
      */
     public function authenticate(string $scope = 'openid', string $qoa = null, string $qor = null, string $locale = null, string $state = null, string $nonce = null, string $loginHint = null, string $prompt = null, int $maxAge = null): void
     {
@@ -836,13 +726,7 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($qoa) && is_null($rs = $this->verifyParameter('qoa', $qoa))) {
             return;
         } elseif (!is_null($qoa) && !$rs['valid']) {
@@ -850,13 +734,7 @@ class SwissIDConnector
              * If an invalid qoa parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The qoa parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The qoa parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($qor) && is_null($rs = $this->verifyParameter('qor', $qor))) {
             return;
         } elseif (!is_null($qor) && !$rs['valid']) {
@@ -864,13 +742,7 @@ class SwissIDConnector
              * If an invalid qor parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The qor parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The qor parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($locale) && is_null($rs = $this->verifyParameter('locale', $locale))) {
             return;
         } elseif (!is_null($locale) && !$rs['valid']) {
@@ -878,13 +750,7 @@ class SwissIDConnector
              * If an invalid locale parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The locale parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The locale parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($loginHint) && is_null($rs = $this->verifyParameter('loginHint', $loginHint))) {
             return;
         } elseif (!is_null($loginHint) && !$rs['valid']) {
@@ -892,13 +758,7 @@ class SwissIDConnector
              * If an invalid locale parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The login hint parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The login hint parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($prompt) && is_null($rs = $this->verifyParameter('prompt', $prompt))) {
             return;
         } elseif (!is_null($prompt) && !$rs['valid']) {
@@ -906,13 +766,7 @@ class SwissIDConnector
              * If an invalid prompt parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The prompt parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The prompt parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($maxAge) && is_null($rs = $this->verifyParameter('maxAge', $maxAge))) {
             return;
         } elseif (!is_null($maxAge) && !$rs['valid']) {
@@ -920,13 +774,7 @@ class SwissIDConnector
              * If an invalid prompt parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']);
         }
 
         if (!$this->connectorInitialized) {
@@ -934,13 +782,7 @@ class SwissIDConnector
              * If this object was not correctly initialized,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'This object was not correctly initialized'
-            );
-            return;
+            throw new Exception('This object was not correctly initialized');
         }
         /**
          * If this object was correctly initialized,
@@ -985,7 +827,6 @@ class SwissIDConnector
         $redirectLocation = $this->openidConfiguration['authorization_endpoint'] . '?' . http_build_query($params2);
         header('Location: ' . $redirectLocation);
         exit;
-        return;
     }
 
     /**
@@ -994,6 +835,7 @@ class SwissIDConnector
      * If an error has occurred, this method returns false, otherwise true
      *
      * @return bool
+     * @throws Exception
      */
     private function getEndUserInfo(): bool
     {
@@ -1002,25 +844,13 @@ class SwissIDConnector
              * If this object was not correctly initialized,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'This object was not correctly initialized'
-            );
-            return false;
+            throw new Exception('This object was not correctly initialized');
         } elseif (!isset($this->accessToken)) {
             /**
              * If there is no access token,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'There is no access token available'
-            );
-            return false;
+            throw new Exception('There is no access token available');
         }
 
         /**
@@ -1069,13 +899,7 @@ class SwissIDConnector
              * If the http status was different from 200,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => null,
-                'error_description' => 'Unexpected http status ' . $httpStatus . '. Maybe the access token has expired?'
-            );
-            return false;
+            throw new Exception('Unexpected http status ' . $httpStatus . '. Maybe the access token has expired?');
         }
 
         $rs2 = explode('.', $rs);
@@ -1084,25 +908,13 @@ class SwissIDConnector
              * If the http status was different from 200,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => null,
-                'error_description' => 'Unexpected output from request to userinfo endpoint'
-            );
-            return false;
+            throw new Exception('Unexpected output from request to userinfo endpoint');
         } elseif (!$rs3 = json_decode(base64_decode($rs2[0]), $associativeP = true)) {
             /**
              * If an error has occurred while trying to decode the JSON response,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => json_last_error(),
-                'error_description' => json_last_error_msg()
-            );
-            return false;
+            throw new Exception(json_last_error_msg());
         } else {
             /**
              * Try to decode the token, based on the applicable algorithm
@@ -1125,27 +937,9 @@ class SwissIDConnector
                  * If an error has occurred,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => $e->getMessage()
-                );
-                return false;
+                throw new Exception($e->getMessage());
             }
         }
-
-        /**
-         * If an unknown error has occurred,
-         * return an error
-         */
-        $this->error = array(
-            'line' => __LINE__,
-            'type' => 'object',
-            'error' => '',
-            'error_description' => 'An unknown has occured whilte trying to initialize this object'
-        );
-        return false;
     }
 
     /**
@@ -1155,6 +949,7 @@ class SwissIDConnector
      *
      * @param string $tokenType The type of token to get. Valid values are 'ACCESS', 'REFRESH'
      * @return string
+     * @throws Exception
      */
     public function getToken(string $tokenType): ?string
     {
@@ -1168,13 +963,7 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The scope parameter "' . $this->scope . '" is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return null;
+            throw new Exception('The scope parameter "' . $this->scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
         }
 
         if ($tokenType == 'ACCESS') {
@@ -1182,6 +971,7 @@ class SwissIDConnector
         } elseif ($tokenType == 'REFRESH') {
             return $this->refreshToken;
         }
+        return null;
     }
 
     /**
@@ -1193,7 +983,8 @@ class SwissIDConnector
      * - value, the value for the claim, null if not available
      *
      * @param string $claim The claim to retrieve
-     * @return string|null
+     * @return array|null
+     * @throws Exception
      */
     public function getClaim(string $claim): ?array
     {
@@ -1202,25 +993,13 @@ class SwissIDConnector
              * If this object was not correctly initialized,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'This object was not correctly initialized'
-            );
-            return null;
+            throw new Exception('This object was not correctly initialized');
         } elseif (!isset($this->endUserInfo)) {
             /**
              * If there is no end-user info
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'There is no end-user info available'
-            );
-            return null;
+            throw new Exception('There is no end-user info available');
         } elseif (!property_exists($this->endUserInfo, $claim)) {
             /**
              * If non-existing, return null value
@@ -1243,13 +1022,7 @@ class SwissIDConnector
          * If an unknown error has occurred,
          * return an error
          */
-        $this->error = array(
-            'line' => __LINE__,
-            'type' => 'object',
-            'error' => '',
-            'error_description' => 'An unknown has occured whilte trying to initialize this object'
-        );
-        return null;
+        throw new Exception('An unknown has occured whilte trying to initialize this object');
     }
 
     /**
@@ -1268,6 +1041,7 @@ class SwissIDConnector
      * @param string $loginHint The login hint, if different from at the time of authentication.
      * @param string $prompt Whether and for what the IdP should prompt the end-user, if different from at the time of authentication. Valid values are 'none', 'login', 'consent'
      * @param int $maxAge The allowable elapsed time in seconds since the last time the end-user was actively authenticated, if different from at the time of authentication. A valid value is an integer >= 0
+     * @throws Exception
      */
     public function stepUpQoR(string $targetQoR, string $nonce = null, string $state = null, string $scope = null, string $qoa = null, string $qor = null, string $locale = null, string $loginHint = null, string $prompt = null, int $maxAge = null): void
     {
@@ -1288,13 +1062,7 @@ class SwissIDConnector
              * If an invalid target qor parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The target qor parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The target qor parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($scope) && is_null($rs = $this->verifyParameter('scope', $scope))) {
             return;
         } elseif (!is_null($scope) && !$rs['valid']) {
@@ -1302,13 +1070,7 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($qoa) && is_null($rs = $this->verifyParameter('qoa', $qoa))) {
             return;
         } elseif (!is_null($qoa) && !$rs['valid']) {
@@ -1316,13 +1078,7 @@ class SwissIDConnector
              * If an invalid qoa parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The qoa parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The qoa parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($qor) && is_null($rs = $this->verifyParameter('qor', $qor))) {
             return;
         } elseif (!is_null($qor) && !$rs['valid']) {
@@ -1330,13 +1086,7 @@ class SwissIDConnector
              * If an invalid qor parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The qor parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The qor parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($locale) && is_null($rs = $this->verifyParameter('locale', $locale))) {
             return;
         } elseif (!is_null($locale) && !$rs['valid']) {
@@ -1344,13 +1094,7 @@ class SwissIDConnector
              * If an invalid locale parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The locale parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The locale parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($loginHint) && is_null($rs = $this->verifyParameter('loginHint', $loginHint))) {
             return;
         } elseif (!is_null($loginHint) && !$rs['valid']) {
@@ -1358,13 +1102,7 @@ class SwissIDConnector
              * If an invalid loginHint parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The login hint parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The login hint parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($prompt) && is_null($rs = $this->verifyParameter('prompt', $prompt))) {
             return;
         } elseif (!is_null($prompt) && !$rs['valid']) {
@@ -1372,13 +1110,7 @@ class SwissIDConnector
              * If an invalid prompt parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The prompt parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The prompt parameter is invalid. Valid values are ' . $rs['allowedValues']);
         } elseif (!is_null($maxAge) && is_null($rs = $this->verifyParameter('maxAge', $maxAge))) {
             return;
         } elseif (!is_null($maxAge) && !$rs['valid']) {
@@ -1386,13 +1118,7 @@ class SwissIDConnector
              * If an invalid prompt parameter has been specified,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']
-            );
-            return;
+            throw new Exception('The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']);
         }
 
         /**
@@ -1411,13 +1137,7 @@ class SwissIDConnector
              * If the end-user was not authenticated yet,
              * return an error
              */
-            $this->error = array(
-                'line' => __LINE__,
-                'type' => 'object',
-                'error' => '',
-                'error_description' => 'This end-user was not authenticated'
-            );
-            return;
+            throw new Exception('This end-user was not authenticated');
         } elseif (!$this->stepUpInitialized[$targetQoR]) {
             /**
              * If the end-user was authenticated,
@@ -1463,7 +1183,6 @@ class SwissIDConnector
             $redirectLocation = $stepUpURI . '?' . http_build_query($params2);
             header('Location: ' . $redirectLocation);
             exit;
-            return;
         } elseif (!$this->steppedUp[$qor]) {
             /**
              * If the end-user was authenticated,
@@ -1476,13 +1195,7 @@ class SwissIDConnector
                  * If an error occurred while trying to complete the authentication,
                  * relay the error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'swissid',
-                    'error' => $_GET['error'],
-                    'error_description' => $_GET['error_description']
-                );
-                return;
+                throw new Exception( $_GET['error_description']);
             } elseif (isset($_GET['code'])) {
                 /**
                  * If an authorization code was obtained,
@@ -1511,13 +1224,7 @@ class SwissIDConnector
                      * If the http status was different from 200,
                      * return an error
                      */
-                    $this->error = array(
-                        'line' => __LINE__,
-                        'type' => 'object',
-                        'error' => null,
-                        'error_description' => 'Unexpected http status ' . $httpStatus
-                    );
-                    return;
+                    throw new Exception('Unexpected http status ' . $httpStatus);
                 }
 
                 if (!$rs2 = json_decode($rs, $associativeP = true)) {
@@ -1525,13 +1232,7 @@ class SwissIDConnector
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
                      */
-                    $this->error = array(
-                        'line' => __LINE__,
-                        'type' => 'object',
-                        'error' => json_last_error(),
-                        'error_description' => json_last_error_msg()
-                    );
-                    return;
+                    throw new Exception(json_last_error_msg());
                 }
 
                 /**
@@ -1557,20 +1258,13 @@ class SwissIDConnector
                  * Store state of this object in the session
                  */
                 $_SESSION[get_class($this)] = get_object_vars($this);
-
                 return;
             } else {
                 /**
                  * If no authorization code was obtained,
                  * return an error
                  */
-                $this->error = array(
-                    'line' => __LINE__,
-                    'type' => 'object',
-                    'error' => '',
-                    'error_description' => 'No authorization code could be obtained'
-                );
-                return;
+                throw new Exception('No authorization code could be obtained');
             }
         } elseif ($this->steppedUp) {
             /**
@@ -1580,10 +1274,8 @@ class SwissIDConnector
             if (!$this->getEndUserInfo()) {
                 return;
             }
-
             return;
         }
-
         return;
     }
 
@@ -1619,15 +1311,10 @@ class SwissIDConnector
      *
      * @param int $line The line from which the method is called
      * @return void
+     * @throws Exception
      */
     private function raiseUnknownError(int $line): void
     {
-        $this->error = array(
-            'line' => $line,
-            'type' => 'object',
-            'error' => '',
-            'error_description' => 'An unknown has occured'
-        );
-        return;
+        throw new Exception('An unknown has occured');
     }
 }
