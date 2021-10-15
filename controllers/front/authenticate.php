@@ -229,7 +229,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 // check if the received email is the same as the local email
                 if ($rs['email'] == $this->context->customer->email) {
                     // check the age over flag
-                    if (isset($rs['age_over']) && !empty($rs['age_over'])) {
+                    if (isset($rs['age_over'])) {
                         $ageOverFlag = $rs['age_over'];
                         $ageOver = 0;
                         // only accept >18 (>16 and <18 is not accepted)
@@ -255,6 +255,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         $isAgeOver = ($ageOver == 1) ? true : false;
                         if ($isAgeOver) {
                             $this->success[] = $this->module->l('Your age has been verified.');
+                        } else {
+                            $this->warning[] = $this->module->l('Your age has been verified.');
+                            $this->warning[] = $this->module->l('Unfortunately, you are not over 18 years old and you may not be able to complete a checkout process because you are underage.');
                         }
                         $query = [
                             'isAgeOver' => $isAgeOver
