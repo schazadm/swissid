@@ -61,13 +61,9 @@ class AdminSwissidCustomerController extends ModuleAdminController
             'AND gl.id_lang = ' . (int)$this->context->language->id;
 
         $this->fields_list = [
-            'id_swissid_customer' => [
-                'title' => $this->module->l('ID'),
-                'width' => 30
-            ],
             'social_title' => [
                 'title' => $this->trans('Social title', [], 'Admin.Global'),
-                'width' => 'auto',
+                'width' => 50,
                 'filter_key' => 'gl!social_title'
             ],
             'firstname' => [
@@ -86,9 +82,10 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 'filter_key' => 'cu!email'
             ],
             'age_over' => [
-                'title' => $this->module->l('Age Over'),
+                'title' => $this->module->l('Age over 18'),
                 'width' => 'auto',
-                'filter_key' => 'a!age_over'
+                'filter_key' => 'a!age_over',
+                'type' => 'bool',
             ],
         ];
 
@@ -119,9 +116,8 @@ class AdminSwissidCustomerController extends ModuleAdminController
                         'name' => 'id_customer',
                         'col' => 4,
                         'desc' => $this->module->l('Choose the Customer whom will be linked to the SwissID'),
-                        'hint' => 'Only the active Customers are shown',
                         'options' => [
-                            'query' => $this->getCustomers(true),
+                            'query' => $this->getCustomers(),
                             'name' => 'name',
                             'id' => 'id_customer'
                         ]
@@ -160,9 +156,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
      * Return customers list.
      *
      * @param bool|null $onlyActive Returns only active customers when `true`
-     *
      * @return array Customers
-     *
      * @throws PrestaShopDatabaseException
      */
     private function getCustomers($onlyActive = null)
