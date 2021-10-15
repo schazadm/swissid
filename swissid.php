@@ -19,6 +19,7 @@ class Swissid extends Module
     const ADMIN_SWISSID_PARENT_CONTROLLER = 'AdminSwissidParent';
     const ADMIN_SWISSID_CONFIGURATION_CONTROLLER = 'AdminSwissidConfiguration';
     const ADMIN_SWISSID_CUSTOMER_CONTROLLER = 'AdminSwissidCustomer';
+    const ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER = 'AdminSwissidNonCustomer';
 
     public function __construct()
     {
@@ -67,8 +68,6 @@ class Swissid extends Module
 
     public function uninstall()
     {
-        //TODO: how to remove the data table safely...dump? or something else
-
         // remove installed database tables
         include(dirname(__FILE__) . '/sql/uninstall.php');
         if (!parent::uninstall()) {
@@ -120,7 +119,12 @@ class Swissid extends Module
                 'name' => 'SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
-            ]
+            ],
+            [
+                'name' => $this->l('Non') . ' SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
+                'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
+                'class_name' => static::ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER
+            ],
         ];
     }
 
