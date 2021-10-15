@@ -85,9 +85,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 case 'ageVerify':
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'ageVerify');
                     $this->requestUserAuthentication();
-                    // if ($this->requestHasUserSufficientQOR()) {
-                    //     $this->ageVerifyAction();
-                    // }
                     break;
                 case 'connect':
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'connect');
@@ -215,51 +212,33 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      */
     private function processErrorResponse()
     {
-        // TODO: set error messages
-        $error = Tools::getValue('error');
-        switch ($error) {
+        $errorDesc = $this->module->l('An error occurred while trying to handle your request.');
+        switch (Tools::getValue('error')) {
             case 'authentication_cancelled':
-                /**
-                 * Handle the end-user who cancelled the authentication
-                 */
+                // Handle the end-user who cancelled the authentication
+                $errorDesc = $this->module->l('The authentication was canceled.');
                 break;
             case 'access_denied':
-                /**
-                 * Handle the end-user who didn't give consent
-                 */
+                // Handle the end-user who didn't give consent
+                $errorDesc = $this->module->l('To ensure optimal functionality, we need your consent.');
                 break;
             case 'interaction_required':
-                /**
-                 * Handle the end-user who didn't authenticate
-                 */
-                break;
-            case 'invalid_client_id':
-                /**
-                 * Handle the case in which the client_id was invalid
-                 */
-                break;
-            case 'redirect_uri_mismatch':
-                /**
-                 * Handle the case in which the redirect URI was invalid
-                 */
-                break;
-            case 'general_error':
-                /**
-                 * Handle the case of a general error
-                 */
-                break;
-            case 'manual_check_needed':
-                /**
-                 * Handle the end-user who is subject to a manual verification
-                 */
+                // Handle the end-user who didn't authenticate
+                $errorDesc = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
                 break;
             case 'cancelled_by_user':
-                /**
-                 * Handle the end-user who cancelled the step-up
-                 */
+                // Handle the end-user who cancelled the step-up
+                $errorDesc = $this->module->l('The step-up process was canceled.');
                 break;
+            case 'invalid_client_id':
+                // Handle the case in which the client_id was invalid
+            case 'redirect_uri_mismatch':
+                // Handle the case in which the redirect URI was invalid
+            case 'general_error':
+                // Handle the case of a general error
+                $errorDesc = $this->module->l('An internal error occurred while trying to handle your request.');
         }
-        $this->responseError(Tools::getValue('error_description'));
+        $this->responseError($errorDesc);
     }
 
     /**
@@ -337,7 +316,9 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         try {
             $scope = 'openid profile email';
             $qoa = null;
-            $qor = 'qor1';
+            // get the configuration
+            $configValues = $this->getConfigValues();
+            $qor = ($configValues['SWISSID_AGE_VERIFICATION']) ? 'qor1' : 'qor0';
             $locale = (isset($this->context->language->iso_code)) ? $this->context->language->iso_code : 'en';
             $state2pass = null;
             $nonce = bin2hex(random_bytes(8));
