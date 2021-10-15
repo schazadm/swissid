@@ -38,9 +38,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 case 'login':
                     $this->loginAction();
                     break;
-                case 'logout':
-                    $this->logoutAction();
-                    break;
                 case 'register':
                     $this->registerAction();
                     break;
@@ -104,13 +101,6 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 )
             );
         }
-    }
-
-    /**
-     * @todo might want to register 'actionCustomerLogoutBefore' hook and do something (like clean-up) when triggered
-     */
-    public function logoutAction()
-    {
     }
 
     /**
