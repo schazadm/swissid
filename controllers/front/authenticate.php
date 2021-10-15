@@ -107,12 +107,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     }
 
     /**
-     *
+     * @todo might want to register 'actionCustomerLogoutBefore' hook and do something (like clean-up) when triggered
      */
     public function logoutAction()
     {
-        // TODO: might want to register 'actionCustomerLogoutBefore' hook and do something (like clean-up) when triggered
-        echo 'swissid logout call';
     }
 
     /**
@@ -256,7 +254,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         }
                         $isAgeOver = ($ageOver == 1) ? true : false;
                         if ($isAgeOver) {
-                            $this->info[] = $this->module->l('Your age has been verified.');
+                            $this->success[] = $this->module->l('Your age has been verified.');
                         }
                         $query = [
                             'isAgeOver' => $isAgeOver
@@ -264,7 +262,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         // return to the success redirection
                         $this->redirectWithNotifications($this->getRedirectPage() . '?' . http_build_query($query));
                     } else {
-                        $this->errors[] = $this->module->l('A technical error occurred trying to request an age verification.');
+                        $this->errors[] = $this->module->l('A technical error occurred while trying to request an age verification.');
                     }
                 } else {
                     $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID');
