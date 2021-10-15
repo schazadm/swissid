@@ -28,7 +28,7 @@
         {if !$linked}
             title="{l s='If you connect your local customer account with your SwissID account, you can log in directly with SwissID.' mod='swissid'}"
         {else}
-            title="{l s='If you disconnect your local customer account from your SwissID, you can no longer log in directly with SwissID.' mod='swissid'}"
+            title=""
         {/if}
 >
     <span class="link-item">
