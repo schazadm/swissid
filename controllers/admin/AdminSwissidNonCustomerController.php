@@ -32,11 +32,15 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
      * Defines and adds the CSS & Js files
      *
      * @param bool $isNewTheme
+     * @throws PrestaShopException
      */
     public function setMedia($isNewTheme = false)
     {
         parent::setMedia($isNewTheme);
         $this->addJS($this->module->getPathUri() . 'views/js/swissid-back-mail.js');
+        Media::addJsDef([
+            'swissidNonCustomerController' => $this->context->link->getAdminLink($this->controller_name)
+        ]);
     }
 
     /**
@@ -75,6 +79,8 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
     }
 
     /**
+     * Function to display a send mail button on the non-customer admin page
+     *
      * @return string|null
      */
     public function displaySendMailLink()
@@ -84,5 +90,46 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
         } catch (Exception $e) {
             return null;
         }
+    }
+
+    public function ajaxProcessSendMail()
+    {
+        // set default responses
+        $res['status'] = 'error';
+        $res['message'] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
+        // check if mail is sent in the request
+        if (Tools::getIsset('non_swissid_customer_email')) {
+            $emailAddress = Tools::getValue('non_swissid_customer_email');
+            // validate mail address and check if customer with given mail exists
+            if (Validate::isEmail($emailAddress) && Customer::customerExists($emailAddress)) {
+                // obtain the customer object
+                $customer = (new Customer())->getByEmail($emailAddress);
+                $data = array(
+                    '{firstname}' => $customer->firstname,
+                    '{lastname}' => $customer->lastname,
+                    '{swissid_logo}' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/swissid/views/img/swissid_logo.png',
+                    '{age_verification_text}' => Configuration::get('SWISSID_AGE_VERIFICATION_TEXT', $customer->id_lang),
+                    '{login_page}' => $this->context->link->getPageLink('authentication'),
+                );
+                if (Mail::Send(
+                    (int)$customer->id_lang,
+                    'reminder',
+                    $this->module->l('SwissID Reminder'),
+                    $data,
+                    $customer->email,
+                    $customer->firstname . ' ' . $customer->lastname,
+                    null,
+                    null,
+                    null,
+                    null,
+                    _PS_MODULE_DIR_ . 'swissid/mails',
+                    false
+                )) {
+                    $res['status'] = 'success';
+                    $res['message'] = $this->module->l('An e-mail was successfully sent to ') . $customer->email . ' ' . $this->module->l('sent') . '.';
+                }
+            }
+        }
+        echo json_encode($res);
     }
 }

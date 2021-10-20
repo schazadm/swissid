@@ -4,8 +4,25 @@
             $(this).closest('tr').find('td').each(function (i, v) {
                 if (isValidEmailAddress($(v).html().toString().trim())) {
                     let mail = $(v).html().toString().trim();
-                    console.log(mail);
-                    // TODO: mail works. Setup an action and do an AJAX call to send an emal
+                    $.ajax(swissidNonCustomerController, {
+                            data: {
+                                'ajax': 1,
+                                'action': 'sendMail',
+                                'non_swissid_customer_email': mail
+                            },
+                            success: function (response) {
+                                let jsonResponse = JSON.parse(response);
+                                if (jsonResponse.status === 'success') {
+                                    showSuccessMessage(jsonResponse.message);
+                                } else {
+                                    showErrorMessage(jsonResponse.message);
+                                }
+                            },
+                            error: function (response) {
+                                showErrorMessage("An error occurred while handling your request.");
+                            }
+                        }
+                    )
                 }
             });
         });
