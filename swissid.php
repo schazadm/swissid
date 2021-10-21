@@ -20,6 +20,7 @@ class Swissid extends Module
     const ADMIN_SWISSID_CONFIGURATION_CONTROLLER = 'AdminSwissidConfiguration';
     const ADMIN_SWISSID_CUSTOMER_CONTROLLER = 'AdminSwissidCustomer';
     const ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER = 'AdminSwissidNonCustomer';
+    const ADMIN_SWISSID_AGE_OVER_PRODUCT_CONTROLLER = 'AdminSwissidAgeOverProduct';
 
     public function __construct()
     {
@@ -54,6 +55,7 @@ class Swissid extends Module
             'displayCustomerLoginFormAfter',
             'displayPersonalInformationTop',
             'actionObjectCustomerDeleteAfter',
+            'actionObjectProductDeleteAfter',
         ];
         // register hooks
         if (!$this->registerHook($hooks)) {
@@ -116,14 +118,19 @@ class Swissid extends Module
                 'class_name' => static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER
             ],
             [
-                'name' => 'SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
+                'name' => $this->l('Verified'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
             ],
             [
-                'name' => $this->l('Non') . ' SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
+                'name' => $this->l('Non Verified'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER
+            ],
+            [
+                'name' => $this->l('Over 18 Products'),
+                'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
+                'class_name' => static::ADMIN_SWISSID_AGE_OVER_PRODUCT_CONTROLLER
             ],
         ];
     }
@@ -143,6 +150,7 @@ class Swissid extends Module
             Configuration::updateValue('SWISSID_AGE_VERIFICATION', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION_TEXT', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION_OPTIONAL', '');
+            Configuration::updateValue('SWISSID_AGE_OVER_PRODUCT', '');
         } catch (Exception | PrestaShopException $e) {
             return false;
         }
@@ -163,6 +171,7 @@ class Swissid extends Module
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION');
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION_TEXT');
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION_OPTIONAL');
+            Configuration::deleteByName('SWISSID_AGE_OVER_PRODUCT');
         } catch (Exception | PrestaShopException $e) {
             return false;
         }
@@ -190,6 +199,17 @@ class Swissid extends Module
                 && SwissidCustomer::isCustomerLinkedById($this->context->customer->id)
                 && SwissidCustomer::isCustomerAgeOver($this->context->customer->id)
             ) {
+                return null;
+            }
+            // check if age over for specific products is on
+            if (Configuration::get('SWISSID_AGE_OVER_PRODUCT')) {
+                // check cart if a product matches with swissid_age_over_product table
+                $productsInCart = $this->context->cart->getProducts();
+                foreach ($productsInCart as $product) {
+                    if (SwissidAgeOverProduct::isProductInTable($product['id_product'])) {
+                        return $this->getAgeVerifyModal();
+                    }
+                }
                 return null;
             }
             // if age verification is not optional always return verify modal
@@ -367,5 +387,20 @@ class Swissid extends Module
             return false;
         }
         return SwissidCustomer::removeSwissidCustomerByCustomerId($customer->id);
+    }
+
+    /**
+     * hook to react if ca product is deleted from the shop by the merchant
+     *
+     * @param array $parameters
+     * @return bool
+     */
+    public function hookActionObjectProductDeleteAfter($parameters)
+    {
+        $product = $parameters['object'];
+        if (!isset($product->id)) {
+            return false;
+        }
+        return SwissidAgeOverProduct::removeAgeOverProductByProductId($product->id);
     }
 }
