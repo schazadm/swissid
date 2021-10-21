@@ -43,7 +43,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     public function initOptions()
     {
         $this->fields_options = [
-            'swissid' => [
+            'swissid_client' => [
                 'title' => $this->module->l('SwissID Client Settings'),
                 'fields' => [
                     'SWISSID_CLIENT_ID' => [
@@ -57,12 +57,27 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                         'title' => $this->module->l('Secret'),
                         'desc' => $this->module->l('Enter a valid client secret'),
                         'hint' => $this->module->l('The secret is an extra layer of security and is also provided by the SwissSign Group'),
-                        'type' => 'osr_password',
+                        'type' => 'text',
                         'required' => true,
                     ],
+                ],
+                'submit' => [
+                    'title' => $this->module->l('Save')
+                ]
+            ],
+            'swissid_age_verification' => [
+                'title' => $this->module->l('SwissID Age Verification'),
+                'fields' => [
                     'SWISSID_AGE_VERIFICATION' => [
                         'title' => $this->module->l('Age verification'),
                         'desc' => $this->module->l('Decide whether the age should be verified (≥18)'),
+                        'type' => 'bool',
+                        'cast' => 'boolval',
+                    ],
+                    'SWISSID_AGE_OVER_PRODUCT' => [
+                        'title' => $this->module->l('Over 18 Products'),
+                        'desc' => $this->module->l('Decide whether a general age verification is needed or just for specific products.'),
+                        'hint' => $this->module->l('If you activate age verification for specific products, then you can manage your ≥18 products under its separate tab.'),
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],
@@ -96,7 +111,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         parent::setMedia($isNewTheme);
         $this->addCSS($this->module->getPathUri() . 'views/css/swissid-back.css');
-        $this->addJS($this->module->getPathUri() . 'views/js/swissid-back.js');
+        $this->addJS($this->module->getPathUri() . 'views/js/swissid-back-conf.js');
         Media::addJsDef([
             'context' => json_encode(Context::getContext()),
             'redirectControllerUrl' => preg_replace('#&id_lang=[0-9]{1,2}$#', '', $this->context->link->getModuleLink($this->module->name, 'RedirectManager', [], true)),
@@ -105,6 +120,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
             'ageVerificationInputName' => 'SWISSID_AGE_VERIFICATION',
             'ageVerificationOptionalInputName' => 'SWISSID_AGE_VERIFICATION_OPTIONAL',
             'ageVerificationTextInputName' => 'SWISSID_AGE_VERIFICATION_TEXT',
+            'ageOverProductInputName' => 'SWISSID_AGE_OVER_PRODUCT',
         ]);
     }
 
@@ -113,6 +129,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
      *
      * @throws PrestaShopException
      */
+    /*
     public function beforeUpdateOptions()
     {
         try {
@@ -127,4 +144,5 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         }
         parent::beforeUpdateOptions();
     }
+    */
 }
