@@ -7,6 +7,7 @@
 $sql = [];
 
 $sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'swissid_customer`;';
+$sql[] = 'DROP TABLE IF EXISTS `' . _DB_PREFIX_ . 'swissid_age_over_product`;';
 
 foreach ($sql as $query) {
     if (Db::getInstance()->execute($query) == false) {
