@@ -126,7 +126,7 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                     false
                 )) {
                     $res['status'] = 'success';
-                    $res['message'] = $this->module->l('An e-mail was successfully sent to ') . $customer->email . ' ' . $this->module->l('sent') . '.';
+                    $res['message'] = $this->module->l('An e-mail was successfully sent to ') . $customer->email;
                 }
             }
         }
