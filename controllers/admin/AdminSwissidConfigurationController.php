@@ -49,7 +49,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                     'SWISSID_CLIENT_ID' => [
                         'title' => $this->module->l('Client ID'),
                         'desc' => $this->module->l('Enter a valid client identifier'),
-                        'hint' => $this->module->l('Specific Client identifier provided by the SwissSign Group'),
+                        'hint' => $this->module->l('Specific Client identifier is provided by the SwissSign Group'),
                         'type' => 'text',
                         'required' => true,
                     ],
@@ -62,7 +62,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                     ],
                 ],
                 'submit' => [
-                    'title' => $this->module->l('Save')
+                    'title' => $this->trans('Save', [], 'Admin.Actions')
                 ]
             ],
             'swissid_age_verification' => [
@@ -95,7 +95,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                     ],
                 ],
                 'submit' => [
-                    'title' => $this->module->l('Save')
+                    'title' => $this->trans('Save', [], 'Admin.Actions')
                 ]
             ]
         ];

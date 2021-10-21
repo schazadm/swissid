@@ -104,7 +104,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
                     'label' => $this->trans('Product', [], 'Admin.Global'),
                     'name' => 'id_product',
                     'col' => 4,
-                    'desc' => $this->module->l('Choose the Product which needs a age verification'),
+                    'desc' => $this->module->l('Choose the Product which needs an age verification'),
                     'options' => [
                         'query' => $this->getProducts(),
                         'name' => 'name',
@@ -113,7 +113,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
                 ],
             ],
             'submit' => [
-                'title' => $this->module->l('Save')
+                'title' => $this->trans('Save', [], 'Admin.Actions')
             ]
         ];
     }

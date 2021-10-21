@@ -142,7 +142,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 ],
             ],
             'submit' => [
-                'title' => $this->module->l('Save')
+                'title' => $this->trans('Save', [], 'Admin.Actions')
             ]
         ];
     }
