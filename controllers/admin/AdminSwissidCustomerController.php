@@ -15,7 +15,6 @@ class AdminSwissidCustomerController extends ModuleAdminController
     public function __construct()
     {
         $this->bootstrap = true;
-
         $this->table = 'swissid_customer';
         $this->className = 'SwissidCustomer';
         // prevent redirection
@@ -23,10 +22,12 @@ class AdminSwissidCustomerController extends ModuleAdminController
         // add default edit and delete functions which work out of the box
         $this->addRowAction('edit');
         $this->addRowAction('delete');
-
         parent::__construct();
     }
 
+    /**
+     * @throws PrestaShopDatabaseException
+     */
     public function init()
     {
         parent::init();
@@ -43,7 +44,6 @@ class AdminSwissidCustomerController extends ModuleAdminController
     {
         parent::setMedia($isNewTheme);
         $this->addCSS($this->module->getPathUri() . 'views/css/swissid-back.css');
-        $this->addJS($this->module->getPathUri() . 'views/js/swissid-back.js');
     }
 
     /**
@@ -51,7 +51,6 @@ class AdminSwissidCustomerController extends ModuleAdminController
      */
     private function initList()
     {
-        $this->_select .= 'a.*, ';
         $this->_select .= 'cu.firstname, cu.lastname, cu.email, cu.active, ';
         $this->_select .= 'gl.name as social_title ';
         $this->_join .= 'LEFT JOIN ' . _DB_PREFIX_ . 'customer as cu ' .
@@ -59,7 +58,6 @@ class AdminSwissidCustomerController extends ModuleAdminController
         $this->_join .= 'LEFT JOIN ' . _DB_PREFIX_ . 'gender_lang gl ' .
             'ON cu.id_gender = gl.id_gender ' .
             'AND gl.id_lang = ' . (int)$this->context->language->id;
-
         $this->fields_list = [
             'social_title' => [
                 'title' => $this->trans('Social title', [], 'Admin.Global'),
@@ -88,7 +86,6 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 'type' => 'bool',
             ],
         ];
-
         $this->bulk_actions = [
             'delete' => [
                 'text' => $this->trans('Delete selected', [], 'Admin.Actions'),
@@ -100,56 +97,54 @@ class AdminSwissidCustomerController extends ModuleAdminController
 
     /**
      * Defines the form if an entry is being added or edited
+     *
+     * @throws PrestaShopDatabaseException
      */
     private function initForm()
     {
-        try {
-            $this->fields_form = [
-                'legend' => [
-                    'title' => $this->module->l('SwissID Customer Link'),
-                    'icon' => 'icon-info-sign'
+        $this->fields_form = [
+            'legend' => [
+                'title' => $this->module->l('SwissID Customer Link'),
+                'icon' => 'icon-info-sign'
+            ],
+            'input' => [
+                [
+                    'type' => 'select',
+                    'label' => $this->trans('Customer', [], 'Admin.Global'),
+                    'name' => 'id_customer',
+                    'col' => 4,
+                    'desc' => $this->module->l('Choose the Customer whom will be linked to the SwissID'),
+                    'options' => [
+                        'query' => $this->getCustomers(),
+                        'name' => 'name',
+                        'id' => 'id_customer'
+                    ]
                 ],
-                'input' => [
-                    [
-                        'type' => 'select',
-                        'label' => $this->trans('Customer', [], 'Admin.Global'),
-                        'name' => 'id_customer',
-                        'col' => 4,
-                        'desc' => $this->module->l('Choose the Customer whom will be linked to the SwissID'),
-                        'options' => [
-                            'query' => $this->getCustomers(),
-                            'name' => 'name',
-                            'id' => 'id_customer'
-                        ]
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->module->l('Age over'),
-                        'name' => 'age_over',
-                        'col' => 4,
-                        'desc' => $this->module->l('Choose if the Customer is over 18'),
-                        'is_bool' => true,
-                        'values' => [
-                            [
-                                'id' => 'age_over_on',
-                                'value' => 1,
-                                'label' => $this->trans('Enabled', [], 'Admin.Global'),
-                            ],
-                            [
-                                'id' => 'age_over_off',
-                                'value' => 0,
-                                'label' => $this->trans('Disabled', [], 'Admin.Global'),
-                            ],
+                [
+                    'type' => 'switch',
+                    'label' => $this->module->l('Age over'),
+                    'name' => 'age_over',
+                    'col' => 4,
+                    'desc' => $this->module->l('Choose if the Customer is over 18'),
+                    'is_bool' => true,
+                    'values' => [
+                        [
+                            'id' => 'age_over_on',
+                            'value' => 1,
+                            'label' => $this->trans('Enabled', [], 'Admin.Global'),
+                        ],
+                        [
+                            'id' => 'age_over_off',
+                            'value' => 0,
+                            'label' => $this->trans('Disabled', [], 'Admin.Global'),
                         ],
                     ],
                 ],
-                'submit' => [
-                    'title' => $this->module->l('Save')
-                ]
-            ];
-        } catch (PrestaShopDatabaseException $e) {
-
-        }
+            ],
+            'submit' => [
+                'title' => $this->module->l('Save')
+            ]
+        ];
     }
 
     /**
