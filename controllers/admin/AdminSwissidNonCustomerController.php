@@ -1,5 +1,26 @@
 <?php
 
+/** ====================================================================
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
+ *
+ * ================================================================== **/
+
 /**
  * Class AdminSwissidNonCustomerController
  *
@@ -98,7 +119,10 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
     {
         // set default responses
         $res['status'] = 'error';
-        $res['message'] = $this->module->l('An error occurred while trying to handle your request. Please try again later.', self::FILE_NAME);
+        $res['message'] = $this->module->l(
+            'An error occurred while trying to handle your request. Please try again later.',
+            self::FILE_NAME
+        );
         // check if mail is sent in the request
         if (Tools::getIsset('non_swissid_customer_email')) {
             $emailAddress = Tools::getValue('non_swissid_customer_email');
@@ -107,11 +131,16 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                 // obtain the customer object
                 $customer = (new Customer())->getByEmail($emailAddress);
                 $data = array(
-                    '{firstname}' => $customer->firstname,
-                    '{lastname}' => $customer->lastname,
-                    '{swissid_logo}' => Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/swissid/views/img/swissid_logo.png',
-                    '{age_verification_text}' => Configuration::get('SWISSID_AGE_VERIFICATION_TEXT', $customer->id_lang),
-                    '{login_page}' => $this->context->link->getPageLink('authentication'),
+                    '{firstname}' =>
+                        $customer->firstname,
+                    '{lastname}' =>
+                        $customer->lastname,
+                    '{swissid_logo}' =>
+                        Tools::getHttpHost(true) . __PS_BASE_URI__ . 'modules/swissid/views/img/swissid_logo.png',
+                    '{age_verification_text}' =>
+                        Configuration::get('SWISSID_AGE_VERIFICATION_TEXT', $customer->id_lang),
+                    '{login_page}' =>
+                        $this->context->link->getPageLink('authentication'),
                 );
                 if (Mail::Send(
                     (int)$customer->id_lang,
@@ -128,7 +157,10 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                     false
                 )) {
                     $res['status'] = 'success';
-                    $res['message'] = $this->module->l('An e-mail was successfully sent to ', self::FILE_NAME) . $customer->email;
+                    $res['message'] = $this->module->l(
+                            'An e-mail was successfully sent to ',
+                            self::FILE_NAME
+                        ) . $customer->email;
                 }
             }
         }

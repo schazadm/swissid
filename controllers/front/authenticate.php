@@ -1,5 +1,26 @@
 <?php
 
+/** ====================================================================
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
+ *
+ * ================================================================== **/
+
 /**
  * Class SwissidAuthenticationModuleFrontController
  *
@@ -28,7 +49,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             if (Tools::getIsset('error_description')) {
                 $this->errors[] = Tools::getValue('error_description');
             } else {
-                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'An error occurred while trying to handle your request. Please try again later.',
+                    self::FILE_NAME
+                );
             }
             $this->redirectWithNotifications($this->getRedirectPage(true));
         }
@@ -89,14 +113,20 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 // authenticate with the given mail address
                 if (!$this->authenticateCustomer($rs['email'], $ageOver)) {
                     // if the authentication process failed set an error message as a cookie for the hook
-                    $this->errors[] = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
+                    $this->errors[] = $this->translator->trans(
+                        'Authentication failed.',
+                        [],
+                        'Shop.Notifications.Error'
+                    );
                     $this->redirectWithNotifications($this->getRedirectPage(true));
                 }
             }
         } else {
             Tools::redirect(
                 $this->context->link->getModuleLink(
-                    $this->module->name, 'redirect', [
+                    $this->module->name,
+                    'redirect',
+                    [
                         'action' => 'login'
                     ]
                 )
@@ -115,7 +145,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             $rs = Tools::getValue('response')['response'];
             $customer = $this->createCustomer($rs);
             if ($customer == null) {
-                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'An error occurred while trying to handle your request. Please try again later.',
+                    self::FILE_NAME
+                );
                 $this->redirectWithNotifications($this->getRedirectPage());
             }
             $customerPersist = new CustomerPersister(
@@ -126,7 +159,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             );
             // try to save the customer
             if (!$customerPersist->save($customer, Tools::passwdGen())) {
-                $this->errors[] = $this->module->l('An error occurred while trying to handle your request. Please try again later.', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'An error occurred while trying to handle your request. Please try again later.',
+                    self::FILE_NAME
+                );
                 $this->redirectWithNotifications($this->getRedirectPage());
             }
             $ageOver = 0;
@@ -139,9 +175,15 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             }
             // add newly created customer to swissID table
             SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
-            $this->info[] = $this->module->l('Your newly created local account was automatically linked to your SwissID account.', self::FILE_NAME);
+            $this->info[] = $this->module->l(
+                'Your newly created local account was automatically linked to your SwissID account.',
+                self::FILE_NAME
+            );
             // redirect to my-account overview
-            $this->success[] = $this->module->l('Registration with SwissID was successful.', self::FILE_NAME);
+            $this->success[] = $this->module->l(
+                'Registration with SwissID was successful.',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage());
         }
     }
@@ -154,7 +196,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function connectAction()
     {
         if (!isset($this->context->customer->id)) {
-            $this->errors[] = $this->module->l('An error occurred while trying to handle your request.', self::FILE_NAME);
+            $this->errors[] = $this->module->l(
+                'An error occurred while trying to handle your request.',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage(true));
         }
         if (Tools::getIsset('response')) {
@@ -168,19 +213,30 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     $ageOver = (isset($rs['age_over']) && !empty($rs['age_over'])) ? $rs['age_over'] : 0;
                     // try to add the SwissID customer entry
                     if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $ageOver)) {
-                        $this->success[] = $this->module->l('Successfully connected to your SwissID', self::FILE_NAME);
+                        $this->success[] = $this->module->l(
+                            'Successfully connected to your SwissID',
+                            self::FILE_NAME
+                        );
                         $this->redirectWithNotifications($this->getRedirectPage());
                     }
                 }
-                $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'Your local account E-Mail does not match with your SwissID',
+                    self::FILE_NAME
+                );
             } else {
-                $this->errors[] = $this->module->l('An error occurred while connecting your SwissID account to your local account.', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'An error occurred while connecting your SwissID account to your local account.',
+                    self::FILE_NAME
+                );
             }
             $this->redirectWithNotifications($this->getRedirectPage(true));
         } else {
             Tools::redirect(
                 $this->context->link->getModuleLink(
-                    $this->module->name, 'redirect', [
+                    $this->module->name,
+                    'redirect',
+                    [
                         'action' => 'connect'
                     ]
                 )
@@ -196,10 +252,17 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function disconnectAction()
     {
         if ($this->disconnectCustomer()) {
-            $this->success[] = $this->module->l('Successfully disconnected from your SwissID', self::FILE_NAME);
+            $this->success[] = $this->module->l(
+                'Successfully disconnected from your SwissID',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage());
         } else {
-            $this->errors[] = $this->module->l('An error occurred while disconnecting your SwissID account from your local account. Please try again.', self::FILE_NAME);
+            $this->errors[] = $this->module->l(
+                'An error occurred while disconnecting your SwissID account from your local account. ' .
+                'Please try again.',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage(true));
         }
     }
@@ -210,7 +273,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     public function ageVerificationAction()
     {
         if (!isset($this->context->customer->id)) {
-            $this->errors[] = $this->module->l('An error occurred while trying to handle your request.', self::FILE_NAME);
+            $this->errors[] = $this->module->l(
+                'An error occurred while trying to handle your request.',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage(true));
         }
         if (Tools::getIsset('response')) {
@@ -231,12 +297,19 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         if (SwissidCustomer::isCustomerLinkedById($this->context->customer->id)) {
                             // try to update the existing entry
                             if (!SwissidCustomer::updateCustomerAgeOver($this->context->customer->id, $ageOver)) {
-                                $this->errors[] = $this->module->l('An error occurred while processing the age verification.', self::FILE_NAME);
+                                $this->errors[] = $this->module->l(
+                                    'An error occurred while processing the age verification.',
+                                    self::FILE_NAME
+                                );
                             }
                         } else {
                             // try to add the SwissID customer entry
                             if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $ageOver)) {
-                                $this->info[] = $this->module->l('Your local account was also linked to your SwissID account. You are now able to login with your SwissID.', self::FILE_NAME);
+                                $this->info[] = $this->module->l(
+                                    'Your local account was also linked to your SwissID account. ' .
+                                    'You are now able to login with your SwissID.',
+                                    self::FILE_NAME
+                                );
                             }
                         }
                         if (isset($rs['birthday']) && !empty($rs['birthday'])) {
@@ -245,10 +318,20 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         }
                         $isAgeOver = ($ageOver == 1) ? true : false;
                         if ($isAgeOver) {
-                            $this->success[] = $this->module->l('Your age has been verified.', self::FILE_NAME);
+                            $this->success[] = $this->module->l(
+                                'Your age has been verified.',
+                                self::FILE_NAME
+                            );
                         } else {
-                            $this->warning[] = $this->module->l('Your age has been verified.', self::FILE_NAME);
-                            $this->warning[] = $this->module->l('Unfortunately, you are not over 18 years old and you may not be able to complete a checkout process because you are underage.', self::FILE_NAME);
+                            $this->warning[] = $this->module->l(
+                                'Your age has been verified.',
+                                self::FILE_NAME
+                            );
+                            $this->warning[] = $this->module->l(
+                                'Unfortunately, you are not over 18 years old and you may not be able to ' .
+                                'complete a checkout process because you are underage.',
+                                self::FILE_NAME
+                            );
                         }
                         $query = [
                             'isAgeOver' => $isAgeOver
@@ -256,13 +339,22 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                         // return to the success redirection
                         $this->redirectWithNotifications($this->getRedirectPage() . '?' . http_build_query($query));
                     } else {
-                        $this->errors[] = $this->module->l('A technical error occurred while trying to request an age verification.', self::FILE_NAME);
+                        $this->errors[] = $this->module->l(
+                            'A technical error occurred while trying to request an age verification.',
+                            self::FILE_NAME
+                        );
                     }
                 } else {
-                    $this->errors[] = $this->module->l('Your local account E-Mail does not match with your SwissID', self::FILE_NAME);
+                    $this->errors[] = $this->module->l(
+                        'Your local account E-Mail does not match with your SwissID',
+                        self::FILE_NAME
+                    );
                 }
             } else {
-                $this->errors[] = $this->module->l('An error occurred while verifying your age.', self::FILE_NAME);
+                $this->errors[] = $this->module->l(
+                    'An error occurred while verifying your age.',
+                    self::FILE_NAME
+                );
             }
             $this->redirectWithNotifications($this->getRedirectPage(true));
         } else {
@@ -308,7 +400,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             // check whether the customer is not linked in the swissid table
             if (!SwissidCustomer::isCustomerLinkedById($customer->id)) {
                 // link customer -> first time login with swissID
-                $this->info[] = $this->module->l('Your local account was automatically linked to your SwissID account.', self::FILE_NAME);
+                $this->info[] = $this->module->l(
+                    'Your local account was automatically linked to your SwissID account.',
+                    self::FILE_NAME
+                );
                 if ($ageOver != null) {
                     SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
                 } else {
@@ -320,7 +415,10 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 }
             }
             $this->updateCustomer($customer);
-            $this->success[] = $this->module->l('Authentication with SwissID was successful.', self::FILE_NAME);
+            $this->success[] = $this->module->l(
+                'Authentication with SwissID was successful.',
+                self::FILE_NAME
+            );
             $this->redirectWithNotifications($this->getRedirectPage());
         } catch (Exception $e) {
             return false;

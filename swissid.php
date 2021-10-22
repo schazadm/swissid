@@ -1,5 +1,26 @@
 <?php
 
+/** ====================================================================
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
+ *
+ * ================================================================== **/
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -22,12 +43,12 @@ class Swissid extends Module
     public function __construct()
     {
         $this->name = 'swissid';
+        $this->tab = 'other';
         $this->version = '1.0.0';
         $this->author = 'Online Services Rieder GmbH';
         $this->need_instance = 1;
-
+        $this->bootstrap = true;
         parent::__construct();
-
         $this->displayName = $this->l('SwissID');
         $this->description = $this->l('Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.');
         $this->confirmUninstall = $this->l('If you uninstall this module, your customers will no longer be able to log in with their SwissID.') . ' ';

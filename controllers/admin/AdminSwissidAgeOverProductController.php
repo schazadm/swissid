@@ -1,5 +1,26 @@
 <?php
 
+/** ====================================================================
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
+ *
+ * ================================================================== **/
+
 /**
  * Class AdminSwissidAgeOverProductController
  *
@@ -106,7 +127,10 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
                     'label' => $this->trans('Product', [], 'Admin.Global'),
                     'name' => 'id_product',
                     'col' => 4,
-                    'desc' => $this->module->l('Choose the Product which needs an age verification', self::FILE_NAME),
+                    'desc' => $this->module->l(
+                        'Choose the Product which needs an age verification',
+                        self::FILE_NAME
+                    ),
                     'options' => [
                         'query' => $this->getProducts(),
                         'name' => 'name',
@@ -133,9 +157,9 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
             '
             SELECT p.`id_product` AS `id_product`, pl.`name` AS `name` 
             FROM `' . _DB_PREFIX_ . 'product` p 
-            LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $this->context->language->id . ' AND pl.`id_shop` = ' . $this->context->shop->id . ') 
-            WHERE 1 ' .
-            ($onlyActive ? ' AND `active` = 1' : '') . '
+            LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' .
+            $this->context->language->id . ' AND pl.`id_shop` = ' . $this->context->shop->id . ') 
+            WHERE 1 ' . ($onlyActive ? ' AND `active` = 1' : '') . '
             ORDER BY `id_product` ASC'
         );
     }
