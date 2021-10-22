@@ -1,6 +1,5 @@
 <?php
-/** ====================================================================
- *
+/**
  * NOTICE OF LICENSE
  *
  * This file is licenced under the Software License Agreement.
@@ -17,8 +16,7 @@
  * @name:              SwissID
  * @description        Provides the possibility for a customer to log in with his SwissID.
  * @website            https://www.os-rieder.ch/
- *
- * ================================================================== **/
+ */
 
 /**
  * Class SwissidCustomer
