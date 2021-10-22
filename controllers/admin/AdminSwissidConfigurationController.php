@@ -7,6 +7,8 @@
  */
 class AdminSwissidConfigurationController extends ModuleAdminController
 {
+    const FILE_NAME = 'AdminSwissidConfigurationController';
+
     /**
      * AdminSwissidConfigurationController constructor.
      *
@@ -44,19 +46,19 @@ class AdminSwissidConfigurationController extends ModuleAdminController
     {
         $this->fields_options = [
             'swissid_client' => [
-                'title' => $this->module->l('SwissID Client Settings'),
+                'title' => $this->module->l('SwissID Client Settings', self::FILE_NAME),
                 'fields' => [
                     'SWISSID_CLIENT_ID' => [
-                        'title' => $this->module->l('Client ID'),
-                        'desc' => $this->module->l('Enter a valid client identifier'),
-                        'hint' => $this->module->l('Specific Client identifier is provided by the SwissSign Group'),
+                        'title' => $this->module->l('Client ID', self::FILE_NAME),
+                        'desc' => $this->module->l('Enter a valid client identifier', self::FILE_NAME),
+                        'hint' => $this->module->l('Specific Client identifier is provided by the SwissSign Group', self::FILE_NAME),
                         'type' => 'text',
                         'required' => true,
                     ],
                     'SWISSID_CLIENT_SECRET' => [
-                        'title' => $this->module->l('Secret'),
-                        'desc' => $this->module->l('Enter a valid client secret'),
-                        'hint' => $this->module->l('The secret is an extra layer of security and is also provided by the SwissSign Group'),
+                        'title' => $this->module->l('Secret', self::FILE_NAME),
+                        'desc' => $this->module->l('Enter a valid client secret', self::FILE_NAME),
+                        'hint' => $this->module->l('The secret is an extra layer of security and is also provided by the SwissSign Group', self::FILE_NAME),
                         'type' => 'text',
                         'required' => true,
                     ],
@@ -66,30 +68,30 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                 ]
             ],
             'swissid_age_verification' => [
-                'title' => $this->module->l('SwissID Age Verification'),
+                'title' => $this->module->l('SwissID Age Verification', self::FILE_NAME),
                 'fields' => [
                     'SWISSID_AGE_VERIFICATION' => [
-                        'title' => $this->module->l('Age verification'),
-                        'desc' => $this->module->l('Decide whether the age should be verified (≥18)'),
+                        'title' => $this->module->l('Age verification', self::FILE_NAME),
+                        'desc' => $this->module->l('Decide whether the age should be verified (≥18)', self::FILE_NAME),
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],
                     'SWISSID_AGE_OVER_PRODUCT' => [
-                        'title' => $this->module->l('Over 18 Products'),
-                        'desc' => $this->module->l('Decide whether a general age verification is needed or just for specific products.'),
-                        'hint' => $this->module->l('If you activate age verification for specific products, then you can manage your ≥18 products under its separate tab.'),
+                        'title' => $this->module->l('Over 18 Products', self::FILE_NAME),
+                        'desc' => $this->module->l('Decide whether a general age verification is needed or just for specific products.', self::FILE_NAME),
+                        'hint' => $this->module->l('If you activate age verification for specific products, then you can manage your ≥18 products under its separate tab.', self::FILE_NAME),
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],
                     'SWISSID_AGE_VERIFICATION_OPTIONAL' => [
-                        'title' => $this->module->l('Age verification optional'),
-                        'desc' => $this->module->l('Decide whether the age verification should be optional or mandatory. If this is option is set to \'True\' then the age verification can be skipped.'),
+                        'title' => $this->module->l('Age verification optional', self::FILE_NAME),
+                        'desc' => $this->module->l('Decide whether the age verification should be optional or mandatory. If this is option is set to \'True\' then the age verification can be skipped.', self::FILE_NAME),
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],
                     'SWISSID_AGE_VERIFICATION_TEXT' => [
-                        'title' => $this->module->l('Age verification text'),
-                        'desc' => $this->module->l('Decide which text should be displayed during the verification process'),
+                        'title' => $this->module->l('Age verification text', self::FILE_NAME),
+                        'desc' => $this->module->l('Decide which text should be displayed during the verification process', self::FILE_NAME),
                         'type' => 'textareaLang',
                         'lang' => true,
                     ],
@@ -135,7 +137,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
         try {
             $secretPlainText = Tools::getValue('SWISSID_CLIENT_SECRET');
             if (strlen($secretPlainText) < 25) {
-                $this->errors[] = $this->module->l('The secret length is incorrect.');
+                $this->errors[] = $this->module->l('The secret length is incorrect.', self::FILE_NAME);
             }
             $cipher = (new PhpEncryption(_NEW_COOKIE_KEY_))->encrypt($secretPlainText);
             $_POST['SWISSID_CLIENT_SECRET'] = $cipher;

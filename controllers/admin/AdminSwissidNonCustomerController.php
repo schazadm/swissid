@@ -7,6 +7,8 @@
  */
 class AdminSwissidNonCustomerController extends ModuleAdminController
 {
+    const FILE_NAME = 'AdminSwissidNonCustomerController';
+
     /**
      * AdminSwissidNonCustomerController constructor.
      *
@@ -96,7 +98,7 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
     {
         // set default responses
         $res['status'] = 'error';
-        $res['message'] = $this->module->l('An error occurred while trying to handle your request. Please try again later.');
+        $res['message'] = $this->module->l('An error occurred while trying to handle your request. Please try again later.', self::FILE_NAME);
         // check if mail is sent in the request
         if (Tools::getIsset('non_swissid_customer_email')) {
             $emailAddress = Tools::getValue('non_swissid_customer_email');
@@ -114,7 +116,7 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                 if (Mail::Send(
                     (int)$customer->id_lang,
                     'reminder',
-                    $this->module->l('SwissID Reminder'),
+                    $this->module->l('SwissID Reminder', self::FILE_NAME),
                     $data,
                     $customer->email,
                     $customer->firstname . ' ' . $customer->lastname,
@@ -126,7 +128,7 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                     false
                 )) {
                     $res['status'] = 'success';
-                    $res['message'] = $this->module->l('An e-mail was successfully sent to ') . $customer->email;
+                    $res['message'] = $this->module->l('An e-mail was successfully sent to ', self::FILE_NAME) . $customer->email;
                 }
             }
         }

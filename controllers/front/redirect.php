@@ -12,6 +12,7 @@ require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
 class SwissidRedirectModuleFrontController extends ModuleFrontController
 {
     const COOKIE_ACTION_TYPE = 'redirect_action_type';
+    const FILE_NAME = 'redirect';
 
     /** @var bool If set to true, will be redirected to authentication page */
     public $auth = false;
@@ -133,23 +134,23 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
 
     private function processErrorResponse()
     {
-        $errorDesc = $this->module->l('An error occurred while trying to handle your request.');
+        $errorDesc = $this->module->l('An error occurred while trying to handle your request.', self::FILE_NAME);
         switch (Tools::getValue('error')) {
             case 'authentication_cancelled':
                 // Handle the end-user who cancelled the authentication
-                $errorDesc = $this->module->l('The authentication was canceled.');
+                $errorDesc = $this->module->l('The authentication was canceled.', self::FILE_NAME);
                 break;
             case 'access_denied':
                 // Handle the end-user who didn't give consent
-                $errorDesc = $this->module->l('To ensure optimal functionality, we need your consent.');
+                $errorDesc = $this->module->l('To ensure optimal functionality, we need your consent.', self::FILE_NAME);
                 break;
             case 'interaction_required':
                 // Handle the end-user who didn't authenticate
-                $errorDesc = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error');
+                $errorDesc = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error', self::FILE_NAME);
                 break;
             case 'cancelled_by_user':
                 // Handle the end-user who cancelled the step-up
-                $errorDesc = $this->module->l('The step-up process was canceled.');
+                $errorDesc = $this->module->l('The step-up process was canceled.', self::FILE_NAME);
                 break;
             case 'invalid_client_id':
                 // Handle the case in which the client_id was invalid
@@ -157,7 +158,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 // Handle the case in which the redirect URI was invalid
             case 'general_error':
                 // Handle the case of a general error
-                $errorDesc = $this->module->l('An internal error occurred while trying to handle your request.');
+                $errorDesc = $this->module->l('An internal error occurred while trying to handle your request.', self::FILE_NAME);
         }
         $this->responseError($errorDesc);
     }

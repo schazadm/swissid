@@ -7,6 +7,8 @@
  */
 class AdminSwissidAgeOverProductController extends ModuleAdminController
 {
+    const FILE_NAME = 'AdminSwissidAgeOverProductController';
+
     /**
      * AdminSwissidAgeOverProductController constructor.
      *
@@ -95,7 +97,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
     {
         $this->fields_form = [
             'legend' => [
-                'title' => $this->module->l('Add over 18 Product'),
+                'title' => $this->module->l('Add over 18 Product', self::FILE_NAME),
                 'icon' => 'icon-info-sign'
             ],
             'input' => [
@@ -104,7 +106,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
                     'label' => $this->trans('Product', [], 'Admin.Global'),
                     'name' => 'id_product',
                     'col' => 4,
-                    'desc' => $this->module->l('Choose the Product which needs an age verification'),
+                    'desc' => $this->module->l('Choose the Product which needs an age verification', self::FILE_NAME),
                     'options' => [
                         'query' => $this->getProducts(),
                         'name' => 'name',

@@ -7,6 +7,8 @@
  */
 class AdminSwissidCustomerController extends ModuleAdminController
 {
+    const FILE_NAME = 'AdminSwissidCustomerController';
+
     /**
      * AdminSwissidCustomerController constructor.
      *
@@ -80,7 +82,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 'filter_key' => 'cu!email'
             ],
             'age_over' => [
-                'title' => $this->module->l('Age over 18'),
+                'title' => $this->module->l('Age over 18', self::FILE_NAME),
                 'width' => 'auto',
                 'filter_key' => 'a!age_over',
                 'type' => 'bool',
@@ -104,7 +106,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
     {
         $this->fields_form = [
             'legend' => [
-                'title' => $this->module->l('SwissID Customer Link'),
+                'title' => $this->module->l('SwissID Customer Link', self::FILE_NAME),
                 'icon' => 'icon-info-sign'
             ],
             'input' => [
@@ -113,7 +115,7 @@ class AdminSwissidCustomerController extends ModuleAdminController
                     'label' => $this->trans('Customer', [], 'Admin.Global'),
                     'name' => 'id_customer',
                     'col' => 4,
-                    'desc' => $this->module->l('Choose the Customer whom will be linked to the SwissID'),
+                    'desc' => $this->module->l('Choose the Customer whom will be linked to the SwissID', self::FILE_NAME),
                     'options' => [
                         'query' => $this->getCustomers(),
                         'name' => 'name',
@@ -122,10 +124,10 @@ class AdminSwissidCustomerController extends ModuleAdminController
                 ],
                 [
                     'type' => 'switch',
-                    'label' => $this->module->l('Age over'),
+                    'label' => $this->module->l('Age over', self::FILE_NAME),
                     'name' => 'age_over',
                     'col' => 4,
-                    'desc' => $this->module->l('Choose if the Customer is over 18'),
+                    'desc' => $this->module->l('Choose if the Customer is over 18', self::FILE_NAME),
                     'is_bool' => true,
                     'values' => [
                         [
