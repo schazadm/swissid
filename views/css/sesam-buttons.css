@@ -3,10 +3,10 @@
  */
 @font-face {
     font-family: "SwissSignCircularWeb";
-    src: url("fonts/SwissSignCircularWeb-Bold.eot");
-    src: url("fonts/SwissSignCircularWeb-Bold.eot?#iefix") format("embedded-opentype"),
-    url("fonts/SwissSignCircularWeb-Bold.woff2") format("woff2"),
-    url("fonts/SwissSignCircularWeb-Bold.woff") format("woff");
+    src: url("../fonts/SwissSignCircularWeb-Bold.eot");
+    src: url("../fonts/SwissSignCircularWeb-Bold.eot?#iefix") format("embedded-opentype"),
+    url("../fonts/SwissSignCircularWeb-Bold.woff2") format("woff2"),
+    url("../fonts/SwissSignCircularWeb-Bold.woff") format("woff");
     font-weight: bold;
 }
 

@@ -1,8 +1,5 @@
 <?php
 
-use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -25,7 +22,6 @@ class Swissid extends Module
     public function __construct()
     {
         $this->name = 'swissid';
-        $this->tab = 'other';
         $this->version = '1.0.0';
         $this->author = 'Online Services Rieder GmbH';
         $this->need_instance = 1;
@@ -89,16 +85,7 @@ class Swissid extends Module
     public function getContent()
     {
         $route = $this->context->link->getAdminLink(static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER);
-        // $route = $this->getModuleContainer()->get('router')->generate('swissid_admin_configruation');
         Tools::redirectAdmin($route);
-    }
-
-    /**
-     * @return ContainerInterface
-     */
-    public function getModuleContainer()
-    {
-        return SymfonyContainer::getInstance();
     }
 
     /**

@@ -74,7 +74,7 @@
                             {if isset($isAgeOver) && !$isAgeOver}
                                 {l s='Unfortunately, because you are not over 18 years old, you will not be able to complete the checkout process.' mod='swissid'}
                             {else}
-                                {$age_verification_text|nl2br nofilter}
+                                {$age_verification_text}
                             {/if}
                         </p>
                     </div>

@@ -56,7 +56,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
         $this->_select .= 'pl.name, p.active ';
         $this->_join .= 'LEFT JOIN ' . _DB_PREFIX_ . 'product as p ' .
             'ON a.id_product = p.id_product ';
-        $this->_join .= 'LEFT JOIN `ps_product_lang` pl ' .
+        $this->_join .= 'LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl ' .
             'ON (pl.`id_product` = p.`id_product` ' .
             'AND pl.`id_lang` = ' . $this->context->language->id . ' ' .
             'AND pl.`id_shop` = ' . $this->context->shop->id . ')';
@@ -133,7 +133,7 @@ class AdminSwissidAgeOverProductController extends ModuleAdminController
             '
             SELECT p.`id_product` AS `id_product`, pl.`name` AS `name` 
             FROM `' . _DB_PREFIX_ . 'product` p 
-            LEFT JOIN `ps_product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $this->context->language->id . ' AND pl.`id_shop` = ' . $this->context->shop->id . ') 
+            LEFT JOIN `' . _DB_PREFIX_ . 'product_lang` pl ON (pl.`id_product` = p.`id_product` AND pl.`id_lang` = ' . $this->context->language->id . ' AND pl.`id_shop` = ' . $this->context->shop->id . ') 
             WHERE 1 ' .
             ($onlyActive ? ' AND `active` = 1' : '') . '
             ORDER BY `id_product` ASC'
