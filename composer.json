@@ -1,6 +1,6 @@
 {
   "name": "osr/swissid",
-  "description": "This is a authentication module",
+  "description": "Provides the possibility for a customer to log in with his SwissID.",
   "authors": [
     {
       "name": "OSR Dev",
