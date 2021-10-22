@@ -1,5 +1,0 @@
-swissid_admin_configruation:
-  path: /swissid/configuration
-  methods: [GET, POST]
-  defaults:
-    _controller: 'OSR\Swissid\Controller\Admin\ConfigurationController::indexAction'

@@ -1,6 +1,0 @@
-services:
-  swissid.module:
-    class: Swissid
-    factory: [ 'Module', 'getInstanceByName' ]
-    arguments:
-      - 'swissid'
