@@ -36,7 +36,7 @@
                        value="PLACEHOLDER"
                 />
                 {if isset($field['suffix'])}
-                    <span class="input-group-addon">{$field['suffix']|strval}</span>
+                    <span class="input-group-addon">{$field['suffix']}</span>
                 {/if}
                 {if isset($field['suffix'])}</div>{/if}
         </div>

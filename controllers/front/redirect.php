@@ -1,15 +1,10 @@
 <?php
-
 /** ====================================================================
- *
  * NOTICE OF LICENSE
- *
  * This file is licenced under the Software License Agreement.
  * With the purchase or the installation of the software in your application
  * you accept the licence agreement.
- *
  * You must not modify, adapt or create derivative works of this source code.
- *
  * @author             Online Services Rieder GmbH
  * @copyright          Online Services Rieder GmbH
  * @license            Check at: https://www.os-rieder.ch/
@@ -18,7 +13,6 @@
  * @name:              SwissID
  * @description        Provides the possibility for a customer to log in with his SwissID.
  * @website            https://www.os-rieder.ch/
- *
  * ================================================================== **/
 
 use OSR\Swissid\Connector\SwissIDConnector;
@@ -215,8 +209,12 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $this->swissIDConnector->completeAuthentication();
             // get the configuration
             $configValues = $this->getConfigValues();
-            $rs['response']['email'] = '';
-            $rs['response']['age_over'] = '';
+            $rs = [
+                'response' => [
+                    'email' => '',
+                    'age_over' => '',
+                ]
+            ];
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
                 $this->requestHasUserSufficientQOR();
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
@@ -247,6 +245,13 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         try {
             $this->swissIDConnector->completeAuthentication();
             $this->requestHasUserSufficientQOR();
+            $rs = [
+                'response' => [
+                    'email' => '',
+                    'birthday' => '',
+                    'age_over' => '',
+                ]
+            ];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
             $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
@@ -296,6 +301,17 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
         try {
             // get the configuration
             $configValues = $this->getConfigValues();
+            $rs = [
+                'response' => [
+                    'birthday' => '',
+                    'age_over' => '',
+                    'gender' => '',
+                    'firstname' => '',
+                    'lastname' => '',
+                    'language' => '',
+                    'email' => '',
+                ]
+            ];
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
                 // lot1 request
                 $this->requestHasUserSufficientQOR();
@@ -420,8 +436,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
      */
     private function responseError($errorMessage = null)
     {
-        $e['error'] = true;
-        ($errorMessage != null) ? $e['error_description'] = $errorMessage : null;
+        $e = [
+            'error' => true,
+            'error_description' => ($errorMessage != null) ? $errorMessage : null
+        ];
         Tools::redirect($this->context->link->getModuleLink($this->module->name, 'authenticate', $e));
     }
 }

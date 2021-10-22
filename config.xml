@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
-	<name>swissid</name>
-	<displayName><![CDATA[SwissID]]></displayName>
-	<version><![CDATA[1.0.0]]></version>
-	<description><![CDATA[Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.]]></description>
-	<author><![CDATA[Online Services Rieder GmbH]]></author>
-	<tab><![CDATA[other]]></tab>
-	<is_configurable>1</is_configurable>
-	<need_instance>1</need_instance>
-	<limited_countries>ch</limited_countries>
+    <name>swissid</name>
+    <displayName><![CDATA[SwissID]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.]]></description>
+    <author><![CDATA[Online Services Rieder GmbH]]></author>
+    <tab><![CDATA[dashboard]]></tab>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+    <limited_countries>ch</limited_countries>
 </module>

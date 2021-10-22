@@ -18,7 +18,7 @@
  * @description        Provides the possibility for a customer to log in with his SwissID.
  * @website            https://www.os-rieder.ch/
  *
- ================================================================== **/
+ * ================================================================== **/
 
 $sql = [];
 

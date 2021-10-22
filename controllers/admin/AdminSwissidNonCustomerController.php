@@ -1,5 +1,4 @@
 <?php
-
 /** ====================================================================
  *
  * NOTICE OF LICENSE
@@ -118,11 +117,13 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
     public function ajaxProcessSendMail()
     {
         // set default responses
-        $res['status'] = 'error';
-        $res['message'] = $this->module->l(
-            'An error occurred while trying to handle your request. Please try again later.',
-            self::FILE_NAME
-        );
+        $res = [
+            'status' => 'error',
+            'message' => $this->module->l(
+                'An error occurred while trying to handle your request. Please try again later.',
+                self::FILE_NAME
+            ),
+        ];
         // check if mail is sent in the request
         if (Tools::getIsset('non_swissid_customer_email')) {
             $emailAddress = Tools::getValue('non_swissid_customer_email');
@@ -157,10 +158,8 @@ class AdminSwissidNonCustomerController extends ModuleAdminController
                     false
                 )) {
                     $res['status'] = 'success';
-                    $res['message'] = $this->module->l(
-                            'An e-mail was successfully sent to ',
-                            self::FILE_NAME
-                        ) . $customer->email;
+                    $message = $this->module->l('An e-mail was successfully sent to ', self::FILE_NAME);
+                    $res['message'] = $message . $customer->email;
                 }
             }
         }

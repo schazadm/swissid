@@ -1,9 +1,6 @@
 <?php
-
-/** ====================================================================
- *
+/**
  * NOTICE OF LICENSE
- *
  * This file is licenced under the Software License Agreement.
  * With the purchase or the installation of the software in your application
  * you accept the licence agreement.
@@ -19,7 +16,7 @@
  * @description        Provides the possibility for a customer to log in with his SwissID.
  * @website            https://www.os-rieder.ch/
  *
- * ================================================================== **/
+ */
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -43,16 +40,20 @@ class Swissid extends Module
     public function __construct()
     {
         $this->name = 'swissid';
-        $this->tab = 'other';
         $this->version = '1.0.0';
         $this->author = 'Online Services Rieder GmbH';
         $this->need_instance = 1;
-        $this->bootstrap = true;
+        $this->tab = 'dashboard';
+
         parent::__construct();
+
         $this->displayName = $this->l('SwissID');
         $this->description = $this->l('Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.');
-        $this->confirmUninstall = $this->l('If you uninstall this module, your customers will no longer be able to log in with their SwissID.') . ' ';
-        $this->confirmUninstall .= $this->l('Before you uninstall the module, make sure that you made a back-up of your database.');
+        $this->confirmUninstall = $this->l('If you uninstall this module, ' .
+                'your customers will no longer be able to log in with their SwissID.') . ' ';
+        $this->confirmUninstall .= $this->l('Before you uninstall the module, ' .
+            'make sure that you made a back-up of your database.');
+
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
     }
 
@@ -153,7 +154,10 @@ class Swissid extends Module
     {
         try {
             // define the redirect URL which is used to authenticate the end-user
-            Configuration::updateValue('SWISSID_REDIRECT_URL', $this->context->link->getBaseLink() . 'module/' . $this->name . '/redirect');
+            Configuration::updateValue(
+                'SWISSID_REDIRECT_URL',
+                $this->context->link->getBaseLink() . 'module/' . $this->name . '/redirect'
+            );
             Configuration::updateValue('SWISSID_CLIENT_ID', '');
             Configuration::updateValue('SWISSID_CLIENT_SECRET', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION', '');
@@ -198,7 +202,9 @@ class Swissid extends Module
         $this->context->controller->addCSS($this->_path . '/views/css/swissid-front.css');
         $this->context->controller->addCSS($this->_path . '/views/css/sesam-buttons.css');
         // check whether we're on the order page and age verification is on
-        if (Tools::getValue('controller') == 'order' && Configuration::get('SWISSID_AGE_VERIFICATION')) {
+        if (Tools::getValue('controller') == 'order'
+            && Configuration::get('SWISSID_AGE_VERIFICATION')
+        ) {
             // if there is no customer logged in then let them login first
             if (!isset($this->context->customer->id)) {
                 return null;
@@ -231,7 +237,9 @@ class Swissid extends Module
                 return $this->getAgeVerifyModal();
             }
             // if cookie is set and it's set to false then show
-            if (isset($this->context->cookie->swissid_verify_asked) && !$this->context->cookie->swissid_verify_asked) {
+            if (isset($this->context->cookie->swissid_verify_asked)
+                && !$this->context->cookie->swissid_verify_asked
+            ) {
                 $this->context->cookie->__set('swissid_verify_asked', true);
                 return $this->getAgeVerifyModal();
             }
@@ -248,7 +256,8 @@ class Swissid extends Module
         if (Tools::getIsset('isAgeOver')) {
             $isAgeOver = Tools::getValue('isAgeOver');
         }
-        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-age-verification-modal.tpl',
+        return $this->fetch(
+            $this->getLocalPath() . 'views/templates/hook/swissid-age-verification-modal.tpl',
             [
                 'show' => true,
                 'img_dir_url' => $this->_path . 'views/img',
@@ -284,7 +293,8 @@ class Swissid extends Module
                 $ageOver = true;
             }
         }
-        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
+        return $this->fetch(
+            $this->getLocalPath() . 'views/templates/hook/swissid-block-myAccount.tpl',
             [
                 'link' => $this->context->link->getModuleLink($this->name, 'authenticate', [
                     'action' => $action,
@@ -327,7 +337,8 @@ class Swissid extends Module
                 $linked = true;
             }
         }
-        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
+        return $this->fetch(
+            $this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
                 'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
                     'action' => 'login',
@@ -347,7 +358,8 @@ class Swissid extends Module
      */
     public function hookDisplayCustomerLoginFormAfter()
     {
-        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
+        return $this->fetch(
+            $this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
                 'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
                     'action' => 'login',
@@ -371,7 +383,8 @@ class Swissid extends Module
                 return null;
             }
         }
-        return $this->fetch($this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
+        return $this->fetch(
+            $this->getLocalPath() . 'views/templates/hook/swissid-login.tpl',
             [
                 'login_url' => $this->context->link->getModuleLink($this->name, 'authenticate', [
                     'action' => 'login',
