@@ -1,5 +1,26 @@
 <?php
 
+/** ====================================================================
+ *
+ * NOTICE OF LICENSE
+ *
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
+ *
+ * ================================================================== **/
+
 use OSR\Swissid\Connector\SwissIDConnector;
 
 require _PS_MODULE_DIR_ . 'swissid/vendor/autoload.php';
@@ -108,7 +129,12 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private function connectToSwissID()
     {
         try {
-            $this->swissIDConnector = new SwissIDConnector($this->clientID, $this->clientSecret, $this->redirectURL, $this->environment);
+            $this->swissIDConnector = new SwissIDConnector(
+                $this->clientID,
+                $this->clientSecret,
+                $this->redirectURL,
+                $this->environment
+            );
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }
@@ -134,23 +160,40 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
 
     private function processErrorResponse()
     {
-        $errorDesc = $this->module->l('An error occurred while trying to handle your request.', self::FILE_NAME);
+        $errorDesc = $this->module->l(
+            'An error occurred while trying to handle your request.',
+            self::FILE_NAME
+        );
         switch (Tools::getValue('error')) {
             case 'authentication_cancelled':
                 // Handle the end-user who cancelled the authentication
-                $errorDesc = $this->module->l('The authentication was canceled.', self::FILE_NAME);
+                $errorDesc = $this->module->l(
+                    'The authentication was canceled.',
+                    self::FILE_NAME
+                );
                 break;
             case 'access_denied':
                 // Handle the end-user who didn't give consent
-                $errorDesc = $this->module->l('To ensure optimal functionality, we need your consent.', self::FILE_NAME);
+                $errorDesc = $this->module->l(
+                    'To ensure optimal functionality, we need your consent.',
+                    self::FILE_NAME
+                );
                 break;
             case 'interaction_required':
                 // Handle the end-user who didn't authenticate
-                $errorDesc = $this->translator->trans('Authentication failed.', [], 'Shop.Notifications.Error', self::FILE_NAME);
+                $errorDesc = $this->translator->trans(
+                    'Authentication failed.',
+                    [],
+                    'Shop.Notifications.Error',
+                    self::FILE_NAME
+                );
                 break;
             case 'cancelled_by_user':
                 // Handle the end-user who cancelled the step-up
-                $errorDesc = $this->module->l('The step-up process was canceled.', self::FILE_NAME);
+                $errorDesc = $this->module->l(
+                    'The step-up process was canceled.',
+                    self::FILE_NAME
+                );
                 break;
             case 'invalid_client_id':
                 // Handle the case in which the client_id was invalid
@@ -158,7 +201,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 // Handle the case in which the redirect URI was invalid
             case 'general_error':
                 // Handle the case of a general error
-                $errorDesc = $this->module->l('An internal error occurred while trying to handle your request.', self::FILE_NAME);
+                $errorDesc = $this->module->l(
+                    'An internal error occurred while trying to handle your request.',
+                    self::FILE_NAME
+                );
         }
         $this->responseError($errorDesc);
     }
@@ -169,6 +215,8 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $this->swissIDConnector->completeAuthentication();
             // get the configuration
             $configValues = $this->getConfigValues();
+            $rs['response']['email'] = '';
+            $rs['response']['age_over'] = '';
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
                 $this->requestHasUserSufficientQOR();
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
@@ -254,7 +302,6 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 // qor1 -> if available
                 $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
-                // $rs['response']['firstname_verified'] = $this->swissIDConnector->getClaim('urn:swissid:first_name')['value'];
             }
             // qor0
             $rs['response']['gender'] = $this->swissIDConnector->getClaim('gender')['value'];
@@ -329,11 +376,20 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
     private function checkConfigValues()
     {
         $configValues = $this->getConfigValues();
-        if (!isset($configValues['SWISSID_REDIRECT_URL']) || !$configValues['SWISSID_REDIRECT_URL'] || empty($configValues['SWISSID_REDIRECT_URL'])) {
+        if (!isset($configValues['SWISSID_REDIRECT_URL'])
+            || !$configValues['SWISSID_REDIRECT_URL']
+            || empty($configValues['SWISSID_REDIRECT_URL'])
+        ) {
             return false;
-        } elseif (!isset($configValues['SWISSID_CLIENT_ID']) || !$configValues['SWISSID_CLIENT_ID'] || empty($configValues['SWISSID_CLIENT_ID'])) {
+        } elseif (!isset($configValues['SWISSID_CLIENT_ID'])
+            || !$configValues['SWISSID_CLIENT_ID']
+            || empty($configValues['SWISSID_CLIENT_ID'])
+        ) {
             return false;
-        } elseif (!isset($configValues['SWISSID_CLIENT_SECRET']) || !$configValues['SWISSID_CLIENT_SECRET'] || empty($configValues['SWISSID_CLIENT_SECRET'])) {
+        } elseif (!isset($configValues['SWISSID_CLIENT_SECRET'])
+            || !$configValues['SWISSID_CLIENT_SECRET']
+            || empty($configValues['SWISSID_CLIENT_SECRET'])
+        ) {
             return false;
         }
         return true;
