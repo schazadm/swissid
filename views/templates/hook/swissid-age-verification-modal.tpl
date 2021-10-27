@@ -115,7 +115,11 @@
                         </button>
                     {/if}
                     {if isset($isAgeOver) && !$isAgeOver}
-                        <a href="/" class="btn btn-secondary">
+                        <a href="/" class="btn btn-secondary"
+                                {if isset($age_verification_optional) && $age_verification_optional}
+                                    style="margin-top: 10px;"
+                                {/if}
+                        >
                             {l s='Back to the Homepage' mod='swissid'}
                         </a>
                     {/if}
