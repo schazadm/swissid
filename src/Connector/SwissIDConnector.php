@@ -1,12 +1,21 @@
 <?php
-
 /**
- * File containing the SwissIDConnector class
+ * NOTICE OF LICENSE
  *
- * @package  SwissIDConnector
- * @author   Sean Natoewal <sean@natoewal.nl>
- * @link     https://github.com/natoewal/SwissIDConnector
- * @filesource
+ * This file is licenced under the Software License Agreement.
+ * With the purchase or the installation of the software in your application
+ * you accept the licence agreement.
+ *
+ * You must not modify, adapt or create derivative works of this source code.
+ *
+ * @author             Online Services Rieder GmbH
+ * @copyright          Online Services Rieder GmbH
+ * @license            Check at: https://www.os-rieder.ch/
+ * @date:              22.10.2021
+ * @version:           1.0.0
+ * @name:              SwissID
+ * @description        Provides the possibility for a customer to log in with his SwissID.
+ * @website            https://www.os-rieder.ch/
  */
 
 namespace OSR\Swissid\Connector;
@@ -14,16 +23,8 @@ namespace OSR\Swissid\Connector;
 use Exception;
 use \Firebase\JWT\JWT;
 use \Firebase\JWT\JWK;
+use Tools;
 
-/**
- * SwissIDConnector class
- *
- * Class to interact with the SwissID IdP
- *
- * @package  SwissIDConnector
- * @author   Sean Natoewal <sean@natoewal.nl>
- * @link     https://github.com/natoewal/SwissIDConnector
- */
 class SwissIDConnector
 {
     /**
@@ -118,7 +119,8 @@ class SwissIDConnector
     private $prompt;
 
     /**
-     * The allowable elapsed time in seconds since the last time the end-user was actively authenticated, requested at the time of authentication
+     * The allowable elapsed time in seconds since the last time the end-user was actively authenticated,
+     * requested at the time of authentication
      *
      * @var int
      */
@@ -228,25 +230,28 @@ class SwissIDConnector
      *
      * After instantiating this object, make sure to check if any error have occurred.
      *
-     * If a brand new instance needs to be created, all first four parameters must be specified and the last three are optional.
-     * If an existing instances needs to be restored from the session, all first four parameters are optional and the last three are ignored.
+     * If a brand new instance needs to be created, all first four parameters must be
+     * specified and the last three are optional.
+     * If an existing instances needs to be restored from the session, all first four
+     * parameters are optional and the last three are ignored.
      *
      * @param string $clientID The RP's client_id
      * @param string $clientSecret The RP's client secret
      * @param string $redirectURI The RP's redirect URI registered with SwissID
      * @param string $environment The environment for which to initialize this object. Valid values are 'PRE', 'PROD'
-     * @param string $accessToken A previously obtained and securely stored access token
-     * @param int $accessTokenExpirationTimestamp The expiration timestamp of a previously obtained and securely stored access token
-     * @param string $refreshToken A previously obtained and securely stored refresh token
      * @throws Exception
      */
-    public function __construct(string $clientID = null, string $clientSecret = null, string $redirectURI = null, string $environment = null, $accessToken = null, $accessTokenExpirationTimestamp = null, $refreshToken = null)
-    {
-        $requiredParametersSet = (!is_null($clientID) || !is_null($clientSecret) || !is_null($redirectURI) || !is_null($environment));
-
-        /**
-         * Start session if not already started
-         */
+    public function __construct(
+        $clientID = null,
+        $clientSecret = null,
+        $redirectURI = null,
+        $environment = null
+    ) {
+        $requiredParametersSet = (!is_null($clientID)
+            || !is_null($clientSecret)
+            || !is_null($redirectURI)
+            || !is_null($environment)
+        );
         if (!isset($_SESSION)) {
             session_start();
         } elseif (!isset($_SESSION[get_class($this)]) && !$requiredParametersSet) {
@@ -257,37 +262,28 @@ class SwissIDConnector
              */
             throw new Exception('Too few parameters have been specified');
         }
-
         if (isset($_SESSION[get_class($this)])) {
-            /**
-             * Reconstruct class member variables from the session,
-             * if not all parameters are set
-             * and if data is available in the session
-             */
-            foreach ($_SESSION[get_class($this)] as $key => $val) {
-                $this->$key = $val;
-            }
+            $this->reconstructObjectBasedOnSession();
         } elseif (!isset($_SESSION[get_class($this)])) {
             /**
              * If class members are not available from the session,
              * and all parameters have been specified,
              * initialize the class member variables
              */
-            $this->openidConfigurationEndpoints = array(
+            $this->openidConfigurationEndpoints = [
                 'PRE' => 'https://login.sandbox.pre.swissid.ch/idp/oauth2/.well-known/openid-configuration',
                 'PROD' => 'https://login.swissid.ch/idp/oauth2/.well-known/openid-configuration'
-            );
+            ];
             $this->connectorInitialized = false;
             $this->authenticationInitialized = false;
             $this->authenticated = false;
-            $this->stepUpInitialized = array(
+            $this->stepUpInitialized = [
                 'qor1' => false
-            );
-            $this->steppedUp = array(
+            ];
+            $this->steppedUp = [
                 'qor1' => false
-            );
+            ];
             $this->automatedReauthenticationAttempted = false;
-
             /**
              * Verify environment parameter
              */
@@ -298,17 +294,19 @@ class SwissIDConnector
                  * If an invalid environment parameter has been specified,
                  * return an error
                  */
-                throw new Exception('The environment parameter is invalid. Valid values are ' . $rs['allowedValues']);
+                throw new Exception('The environment parameter is invalid. ' .
+                    'Valid values are ' . $rs['allowedValues']);
             }
-
-            if (!$openidConfigurationEncoded = file_get_contents($this->openidConfigurationEndpoints[$environment])) {
+            if (!$openidConfigurationEncoded = Tools::file_get_contents(
+                $this->openidConfigurationEndpoints[$environment]
+            )) {
                 /**
                  * If SwissID's OpenID configuration could not be read,
                  * return an error
                  */
                 throw new Exception('An error has occurred while trying to read the openid configuration');
             } else {
-                if (!$openidConfigurationDecoded = json_decode($openidConfigurationEncoded, $associativeP = true)) {
+                if (!$openidConfigurationDecoded = json_decode($openidConfigurationEncoded, true)) {
                     /**
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
@@ -324,15 +322,14 @@ class SwissIDConnector
                     $this->environment = $environment;
                     $this->openidConfiguration = $openidConfigurationDecoded;
                     $this->connectorInitialized = true;
-
-                    if (!$keysEncoded = file_get_contents($this->openidConfiguration['jwks_uri'])) {
+                    if (!$keysEncoded = Tools::file_get_contents($this->openidConfiguration['jwks_uri'])) {
                         /**
                          * If SwissID's OpenID configuration could not be read,
                          * return an error
                          */
                         throw new Exception('An error has occurred while trying to read the keys');
                     } else {
-                        if (!$keysDecoded = json_decode($keysEncoded, $associativeP = true)) {
+                        if (!$keysDecoded = json_decode($keysEncoded, true)) {
                             /**
                              * If an error has occurred while trying to decode the JSON response,
                              * return an error
@@ -354,7 +351,7 @@ class SwissIDConnector
      * @return bool
      * @throws Exception
      */
-    private function refreshAccessToken(): bool
+    private function refreshAccessToken()
     {
         if (is_null($this->refreshToken)) {
             /**
@@ -363,16 +360,15 @@ class SwissIDConnector
              */
             throw new Exception('There is no refresh token available');
         }
-
         /**
          * Try to redeem the refresh token at the token endpoint
          */
-        $params = array(
+        $params = [
             'scope' => $this->scope,
             'grant_type' => 'refresh_token',
             'client_id' => $this->clientID,
             'refresh_token' => $this->refreshToken
-        );
+        ];
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_USERPWD, $this->clientID . ':' . $this->clientSecret);
@@ -383,7 +379,6 @@ class SwissIDConnector
         $rs = curl_exec($ch);
         $httpStatus = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
         if ($httpStatus != 200) {
             /**
              * If the http status was different from 200,
@@ -391,15 +386,13 @@ class SwissIDConnector
              */
             throw new Exception('Unexpected http status ' . $httpStatus . ' - ' . $rs);
         }
-
-        if (!$rs2 = json_decode($rs, $associativeP = true)) {
+        if (!$rs2 = json_decode($rs, true)) {
             /**
              * If an error has occurred while trying to decode the JSON response,
              * return an error
              */
             throw new Exception(json_last_error_msg());
         }
-
         /**
          * Store the access and refresh token
          */
@@ -415,35 +408,36 @@ class SwissIDConnector
      * If no error has occurred, this method returns null, otherwise an array:
      *
      * - valid, whether the parameter was valid
-     * - alowedValues, the allowed values for the parameter specified
+     * - allowedValues, the allowed values for the parameter specified
      *
-     * @param string $type The type of parameter to verify. Valid values are 'environment', 'scope', 'qoa', 'qor', 'locale', 'login_hint', 'prompt', 'maxAge', 'tokenType'
+     * @param string $type The type of parameter to verify. Valid values are 'environment',
+     * 'scope', 'qoa', 'qor', 'locale', 'login_hint', 'prompt', 'maxAge', 'tokenType'
      * @param string $value the value to verify for the parameter specified
      * @return array|null
      * @throws Exception
      */
-    private function verifyParameter(string $type, $value): ?array
+    private function verifyParameter($type, $value)
     {
-        if (!in_array($type, array('environment', 'scope', 'qoa', 'qor', 'locale', 'login_hint', 'prompt', 'maxAge', 'tokenType'))) {
+        if (!in_array($type, ['environment', 'scope', 'qoa', 'qor', 'locale',
+            'login_hint', 'prompt', 'maxAge', 'tokenType'])) {
             /**
              * If an invalid type has been specified,
              * return an error
              */
-            throw new Exception('The type parameter "' . $type . '" is invalid. Valid values are environment, scope, qoa, qor, locale, prompt, maxAge');
+            throw new Exception('The type parameter "' . $type . '" is invalid. ' .
+                'Valid values are environment, scope, qoa, qor, locale, prompt, maxAge');
         }
-
         switch ($type) {
             case 'environment':
-                $allowedValues = array('PRE', 'PROD');
-                return array(
+                $allowedValues = ['PRE', 'PROD'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'scope':
-                $allowedValues = array('openid', 'profile', 'email', 'phone', 'address');
+                $allowedValues = ['openid', 'profile', 'email', 'phone', 'address'];
                 $requestedScopes = explode(' ', $value);
-                $invalidParameter = false;
+                // $invalidParameter = false;
                 foreach ($requestedScopes as $requestedScope) {
                     $requestedScopeFound = false;
                     $requestedScopeFoundMultipleTimes = false;
@@ -455,71 +449,63 @@ class SwissIDConnector
                         }
                     }
                     if (!$requestedScopeFound || $requestedScopeFoundMultipleTimes) {
-                        return array(
+                        return [
                             'valid' => false,
                             'allowedValues' => implode(', ', $allowedValues)
-                        );
+                        ];
                     }
                 }
-                return array(
+                return [
                     'valid' => true,
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'qoa':
-                $allowedValues = array('qoa1', 'qoa2');
-                return array(
+                $allowedValues = ['qoa1', 'qoa2'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'qor':
-                $allowedValues = array('qor0', 'qor1', 'qor2');
-                return array(
+                $allowedValues = ['qor0', 'qor1', 'qor2'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'locale':
-                $allowedValues = array('de', 'fr', 'it', 'en');
-                return array(
+                $allowedValues = ['de', 'fr', 'it', 'en'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'login_hint':
-                return array(
+                return [
                     'valid' => filter_var($value, FILTER_VALIDATE_EMAIL),
                     'allowedValues' => 'a valid e-mail address'
-                );
-                break;
+                ];
             case 'prompt':
-                $allowedValues = array('none', 'login', 'consent');
-                return array(
+                $allowedValues = ['none', 'login', 'consent'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             case 'maxAge':
-                return array(
+                return [
                     'valid' => (is_numeric($value) && $value >= 0),
                     'allowedValues' => 'a postive numeric value'
-                );
-                break;
+                ];
             case 'tokenType':
-                $allowedValues = array('ACCESS', 'REFRESH');
-                return array(
+                $allowedValues = ['ACCESS', 'REFRESH'];
+                return [
                     'valid' => in_array($value, $allowedValues),
                     'allowedValues' => implode(', ', $allowedValues)
-                );
-                break;
+                ];
             default:
                 /**
                  * If an unknown error type of parameter was specified,
                  * return an error
                  */
-                throw new Exception('An unknown type of parameter was specified. Valid values are scope, qoa, qor, locale, prompt, maxAge');
-                break;
+                throw new Exception('An unknown type of parameter was specified. ' .
+                    'Valid values are scope, qoa, qor, locale, prompt, maxAge');
         }
     }
 
@@ -529,7 +515,7 @@ class SwissIDConnector
      * If an error has occurred, this method returns false, otherwise true
      * @throws Exception
      */
-    public function completeAuthentication(): bool
+    public function completeAuthentication()
     {
         if (!$this->connectorInitialized) {
             /**
@@ -550,24 +536,23 @@ class SwissIDConnector
              * but the authentication was not completed,
              * try to complete the authentication
              */
-            if (isset($_GET['error']) && isset($_GET['error_description'])) {
+            if (Tools::getIsset('error') && Tools::getIsset('error_description')) {
                 /**
                  * If an error occurred while trying to complete the authentication,
                  * relay the error
                  */
-                throw new Exception($_GET['error_description']);
-            } elseif (isset($_GET['code'])) {
+                throw new Exception(Tools::getValue('error_description'));
+            } elseif (Tools::getIsset('code')) {
                 /**
                  * If an authorization code was obtained,
                  * try to redeem it at the token endpoint
                  */
-                $this->authorizationCode = $_GET['code'];
-
-                $params = array(
+                $this->authorizationCode = Tools::getValue('code');
+                $params = [
                     'grant_type' => 'authorization_code',
                     'code' => $this->authorizationCode,
                     'redirect_uri' => $this->redirectURI
-                );
+                ];
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_HEADER, 0);
                 curl_setopt($ch, CURLOPT_USERPWD, $this->clientID . ':' . $this->clientSecret);
@@ -578,7 +563,6 @@ class SwissIDConnector
                 $rs = curl_exec($ch);
                 $httpStatus = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
-
                 if ($httpStatus != 200) {
                     /**
                      * If the http status was different from 200,
@@ -586,41 +570,35 @@ class SwissIDConnector
                      */
                     throw new Exception('Unexpected http status ' . $httpStatus);
                 }
-
-                if (!$rs2 = json_decode($rs, $associativeP = true)) {
+                if (!$rs2 = json_decode($rs, true)) {
                     /**
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
                      */
                     throw new Exception(json_last_error_msg());
                 }
-
                 /**
                  * Store the access and refresh token
                  */
                 $this->accessToken = $rs2['access_token'];
                 $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
                 $this->refreshToken = $rs2['refresh_token'];
-
                 /**
                  * Try to get the info from the end-user
                  */
                 if (!$this->getEndUserInfo()) {
                     return false;
                 }
-
                 /**
                  * Mark the authentication as being completed
                  */
                 $this->authenticated = true;
-
                 /**
                  * Store state of this object in the session
                  */
-                $_SESSION[get_class($this)] = get_object_vars($this);
-
+                $this->saveObjectParamsToSession();
                 return true;
-            } elseif (!isset($_GET['code'])) {
+            } elseif (!Tools::getIsset('code')) {
                 /**
                  * If no authorization code was obtained,
                  * return an error
@@ -631,7 +609,7 @@ class SwissIDConnector
                  * If an unknown error has occurred,
                  * return an error
                  */
-                $this->raiseUnknownError(__LINE__);
+                $this->raiseUnknownError();
                 return false;
             }
         } elseif ($this->authenticated) {
@@ -642,14 +620,13 @@ class SwissIDConnector
             if (!$this->getEndUserInfo()) {
                 return false;
             }
-
             return true;
         } else {
             /**
              * If an unknown error has occurred,
              * return an error
              */
-            $this->raiseUnknownError(__LINE__);
+            $this->raiseUnknownError();
             return false;
         }
     }
@@ -657,20 +634,32 @@ class SwissIDConnector
     /**
      * Method to authenticate the end-user
      *
-     * @param string $scope The scope requested. Valid values are any combination of the following 'openid', 'profile', 'email', 'phone', 'address'
+     * @param string $scope The scope requested. Valid values are any combination
+     * of the following 'openid', 'profile', 'email', 'phone', 'address'
      * @param string $qoa The Quality of Authentication requested. Valid values are 'qoa1', 'qoa2'
      * @param string $qor The Quality of Registration requested. Valid values are 'qor0', 'qor1', 'qor2'
      * @param string $locale The language of the end-user interface. Valid values are 'de', 'fr', 'it', 'en'
      * @param string $state The state to pass
      * @param string $nonce The nonce to be used
      * @param string $loginHint The login hint
-     * @param string $prompt Whether and for what the IdP should prompt the end-user. Valid values are 'none', 'login', 'consent'
-     * @param int $maxAge The allowable elapsed time in seconds since the last time the end-user was actively authenticated. A valid value is an integer >= 0
+     * @param string $prompt Whether and for what the IdP should prompt the end-user.
+     * Valid values are 'none', 'login', 'consent'
+     * @param int $maxAge The allowable elapsed time in seconds since the last time the
+     * end-user was actively authenticated. A valid value is an integer >= 0
      * @return void
      * @throws Exception
      */
-    public function authenticate(string $scope = 'openid', string $qoa = null, string $qor = null, string $locale = null, string $state = null, string $nonce = null, string $loginHint = null, string $prompt = null, int $maxAge = null): void
-    {
+    public function authenticate(
+        $scope = 'openid',
+        $qoa = null,
+        $qor = null,
+        $locale = null,
+        $state = null,
+        $nonce = null,
+        $loginHint = null,
+        $prompt = null,
+        $maxAge = null
+    ) {
         /**
          * Store parameters as class member variables
          */
@@ -715,7 +704,6 @@ class SwissIDConnector
         } else {
             $maxAge = (isset($this->maxAge)) ? $this->maxAge : null;
         }
-
         /**
          * Verify parameters
          */
@@ -726,7 +714,8 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
+            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' .
+                $rs['allowedValues']);
         } elseif (!is_null($qoa) && is_null($rs = $this->verifyParameter('qoa', $qoa))) {
             return;
         } elseif (!is_null($qoa) && !$rs['valid']) {
@@ -758,7 +747,8 @@ class SwissIDConnector
              * If an invalid locale parameter has been specified,
              * return an error
              */
-            throw new Exception('The login hint parameter is invalid. Valid values are ' . $rs['allowedValues']);
+            throw new Exception('The login hint parameter is invalid. Valid values are ' .
+                $rs['allowedValues']);
         } elseif (!is_null($prompt) && is_null($rs = $this->verifyParameter('prompt', $prompt))) {
             return;
         } elseif (!is_null($prompt) && !$rs['valid']) {
@@ -776,7 +766,6 @@ class SwissIDConnector
              */
             throw new Exception('The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']);
         }
-
         if (!$this->connectorInitialized) {
             /**
              * If this object was not correctly initialized,
@@ -790,7 +779,7 @@ class SwissIDConnector
          * try to initialize the authentication
          */
         $claims = (is_null($qor)) ? null : '{"userinfo":{"urn:swissid:qor":{"value":"' . $qor . '"}}}';
-        $params = array(
+        $params = [
             'response_type' => 'code',
             'client_id' => $this->clientID,
             'redirect_uri' => $this->redirectURI,
@@ -803,30 +792,26 @@ class SwissIDConnector
             'max_age' => $maxAge,
             'claims' => $claims,
             'acr_values' => $qoa
-        );
-        $params2 = array();
+        ];
+        $params2 = [];
         foreach ($params as $key => $val) {
             if (!is_null($val)) {
                 $params2[$key] = $val;
             }
         }
-
         /**
          * Mark the authentication as being initialized
          */
         $this->authenticationInitialized = true;
-
         /**
          * Store state of this object in the session
          */
-        $_SESSION[get_class($this)] = get_object_vars($this);
-
+        $this->saveObjectParamsToSession();
         /**
          * Redirect
          */
         $redirectLocation = $this->openidConfiguration['authorization_endpoint'] . '?' . http_build_query($params2);
-        header('Location: ' . $redirectLocation);
-        exit;
+        Tools::redirect($redirectLocation);
     }
 
     /**
@@ -837,7 +822,7 @@ class SwissIDConnector
      * @return bool
      * @throws Exception
      */
-    private function getEndUserInfo(): bool
+    private function getEndUserInfo()
     {
         if (!$this->connectorInitialized) {
             /**
@@ -852,7 +837,6 @@ class SwissIDConnector
              */
             throw new Exception('There is no access token available');
         }
-
         /**
          * If the access token has expired,
          * try to obtain a new access token
@@ -865,19 +849,18 @@ class SwissIDConnector
                 return false;
             }
         }
-
         /**
          * Use the access token to get the end user info from the user info endpoint
          */
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Authorization: Bearer ' . $this->accessToken));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' .
+            $this->accessToken]);
         curl_setopt($ch, CURLOPT_URL, $this->openidConfiguration['userinfo_endpoint']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $rs = curl_exec($ch);
         $httpStatus = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
         if ($httpStatus == 401 && !$this->automatedReauthenticationAttempted) {
             /**
              * If the attempt failed,
@@ -887,21 +870,30 @@ class SwissIDConnector
             $this->automatedReauthenticationAttempted = true;
             $this->authenticationInitialized = false;
             $this->authenticated = false;
-            $this->stepUpInitialized = array(
+            $this->stepUpInitialized = [
                 'qor1' => false
-            );
-            $this->steppedUp = array(
+            ];
+            $this->steppedUp = [
                 'qor1' => false
+            ];
+            $this->authenticate(
+                $this->scope,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                'login'
             );
-            $this->authenticate($this->scope, null, null, null, null, null, null, 'login');
         } elseif ($httpStatus != 200) {
             /**
              * If the http status was different from 200,
              * return an error
              */
-            throw new Exception('Unexpected http status ' . $httpStatus . '. Maybe the access token has expired?');
+            throw new Exception('Unexpected http status ' . $httpStatus .
+                '. Maybe the access token has expired?');
         }
-
         $rs2 = explode('.', $rs);
         if (count($rs2) != 3) {
             /**
@@ -909,7 +901,7 @@ class SwissIDConnector
              * return an error
              */
             throw new Exception('Unexpected output from request to userinfo endpoint');
-        } elseif (!$rs3 = json_decode(base64_decode($rs2[0]), $associativeP = true)) {
+        } elseif (!$rs3 = json_decode(base64_decode($rs2[0]), true)) {
             /**
              * If an error has occurred while trying to decode the JSON response,
              * return an error
@@ -922,11 +914,10 @@ class SwissIDConnector
             try {
                 $alg = $rs3['alg'];
                 if ($alg == 'HS256') {
-                    $decodedIDToken = JWT::decode($rs, $this->clientSecret, array('HS256'));
+                    $decodedIDToken = JWT::decode($rs, $this->clientSecret, ['HS256']);
                 } elseif ($alg == 'RS256') {
-                    $decodedIDToken = JWT::decode($rs, JWK::parseKeySet($this->keys), array('RS256'));
+                    $decodedIDToken = JWT::decode($rs, JWK::parseKeySet($this->keys), ['RS256']);
                 }
-
                 /**
                  * On success, update the class member variables
                  */
@@ -951,7 +942,7 @@ class SwissIDConnector
      * @return string
      * @throws Exception
      */
-    public function getToken(string $tokenType): ?string
+    public function getToken($tokenType)
     {
         /**
          * Verify parameter
@@ -963,9 +954,9 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            throw new Exception('The scope parameter "' . $this->scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
+            throw new Exception('The scope parameter "' . $this->scope . '" is invalid. Valid values are ' .
+                $rs['allowedValues']);
         }
-
         if ($tokenType == 'ACCESS') {
             return $this->accessToken;
         } elseif ($tokenType == 'REFRESH') {
@@ -986,7 +977,7 @@ class SwissIDConnector
      * @return array|null
      * @throws Exception
      */
-    public function getClaim(string $claim): ?array
+    public function getClaim($claim)
     {
         if (!$this->connectorInitialized) {
             /**
@@ -1004,25 +995,24 @@ class SwissIDConnector
             /**
              * If non-existing, return null value
              */
-            return array(
+            return [
                 'claim' => $claim,
                 'value' => null
-            );
+            ];
         } elseif (property_exists($this->endUserInfo, $claim)) {
             /**
              * On success, return the claim
              */
-            return array(
+            return [
                 'claim' => $claim,
                 'value' => $this->endUserInfo->$claim
-            );
+            ];
         }
-
         /**
          * If an unknown error has occurred,
          * return an error
          */
-        throw new Exception('An unknown has occured whilte trying to initialize this object');
+        throw new Exception('An unknown has occurred while trying to initialize this object');
     }
 
     /**
@@ -1034,24 +1024,40 @@ class SwissIDConnector
      * @param string $targetQoR The target Quality of Registration. Valid values are 'qor1'
      * @param string $nonce The nonce to be used
      * @param string $state The state to pass
-     * @param string $scope The scope requested, if different from at the time of authentication. Valid values are any combination of the following 'openid', 'profile', 'email', 'phone', 'address'
-     * @param string $qoa The Quality of Authentication requested, if different from at the time of authentication. Valid values are 'qoa1', 'qoa2'
-     * @param string $qor The Quality of Registration requested, if different from at the time of authentication. Valid values are 'qor0', 'qor1', 'qor2'
-     * @param string $locale The language of the end-user interface, if different from at the time of authentication. Valid values are 'de', 'fr', 'it', 'en'
+     * @param string $scope The scope requested, if different from at the time of authentication.
+     * Valid values are any combination of the following 'openid', 'profile', 'email', 'phone', 'address'
+     * @param string $qoa The Quality of Authentication requested, if different from at the time of authentication.
+     * Valid values are 'qoa1', 'qoa2'
+     * @param string $qor The Quality of Registration requested, if different from at the time of authentication.
+     * Valid values are 'qor0', 'qor1', 'qor2'
+     * @param string $locale The language of the end-user interface, if different from at the time of authentication.
+     * Valid values are 'de', 'fr', 'it', 'en'
      * @param string $loginHint The login hint, if different from at the time of authentication.
-     * @param string $prompt Whether and for what the IdP should prompt the end-user, if different from at the time of authentication. Valid values are 'none', 'login', 'consent'
-     * @param int $maxAge The allowable elapsed time in seconds since the last time the end-user was actively authenticated, if different from at the time of authentication. A valid value is an integer >= 0
+     * @param string $prompt Whether and for what the IdP should prompt the end-user,
+     * if different from at the time of authentication. Valid values are 'none', 'login', 'consent'
+     * @param int $maxAge The allowable elapsed time in seconds since the last time
+     * the end-user was actively authenticated, if different from at the time of authentication.
+     * A valid value is an integer >= 0
      * @throws Exception
      */
-    public function stepUpQoR(string $targetQoR, string $nonce = null, string $state = null, string $scope = null, string $qoa = null, string $qor = null, string $locale = null, string $loginHint = null, string $prompt = null, int $maxAge = null): void
-    {
+    public function stepUpQoR(
+        $targetQoR,
+        $nonce = null,
+        $state = null,
+        $scope = null,
+        $qoa = null,
+        $qor = null,
+        $locale = null,
+        $loginHint = null,
+        $prompt = null,
+        $maxAge = null
+    ) {
         /**
          * Store nonce as class member variable
          */
         if (!is_null($nonce)) {
             $this->nonce = $nonce;
         }
-
         /**
          * Verify parameters
          */
@@ -1062,7 +1068,8 @@ class SwissIDConnector
              * If an invalid target qor parameter has been specified,
              * return an error
              */
-            throw new Exception('The target qor parameter is invalid. Valid values are ' . $rs['allowedValues']);
+            throw new Exception('The target qor parameter is invalid. Valid values are ' .
+                $rs['allowedValues']);
         } elseif (!is_null($scope) && is_null($rs = $this->verifyParameter('scope', $scope))) {
             return;
         } elseif (!is_null($scope) && !$rs['valid']) {
@@ -1070,7 +1077,8 @@ class SwissIDConnector
              * If an invalid scope parameter has been specified,
              * return an error
              */
-            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' . $rs['allowedValues']);
+            throw new Exception('The scope parameter "' . $scope . '" is invalid. Valid values are ' .
+                $rs['allowedValues']);
         } elseif (!is_null($qoa) && is_null($rs = $this->verifyParameter('qoa', $qoa))) {
             return;
         } elseif (!is_null($qoa) && !$rs['valid']) {
@@ -1120,7 +1128,6 @@ class SwissIDConnector
              */
             throw new Exception('The maxAge parameter is invalid. Valid values are ' . $rs['allowedValues']);
         }
-
         /**
          * Determine which parameters to use
          */
@@ -1131,7 +1138,6 @@ class SwissIDConnector
         $loginHint = (is_null($loginHint) && isset($this->loginHint)) ? $this->loginHint : $loginHint;
         $prompt = (is_null($prompt) && isset($this->prompt)) ? $this->prompt : $prompt;
         $maxAge = (is_null($maxAge) && isset($this->maxAge)) ? $this->maxAge : $maxAge;
-
         if (!$this->authenticated) {
             /**
              * If the end-user was not authenticated yet,
@@ -1145,7 +1151,7 @@ class SwissIDConnector
              * try to initialize the QoR1 step-up
              */
             $claims = (is_null($qor)) ? null : '{"userinfo":{"urn:swissid:qor":{"value":"' . $qor . '"}}}';
-            $params = array(
+            $params = [
                 'response_type' => 'code',
                 'client_id' => $this->clientID,
                 'redirect_uri' => $this->redirectURI,
@@ -1158,31 +1164,29 @@ class SwissIDConnector
                 'max_age' => $maxAge,
                 'claims' => $claims,
                 'acr_values' => $qoa
-            );
-            $params2 = array();
+            ];
+            $params2 = [];
             foreach ($params as $key => $val) {
                 if (!is_null($val)) {
                     $params2[$key] = $val;
                 }
             }
-
             /**
              * Mark the step-up as being initialized
              */
             $this->stepUpInitialized[$targetQoR] = true;
-
             /**
              * Store state of this object in the session
              */
-            $_SESSION[get_class($this)] = get_object_vars($this);
-
+            $this->saveObjectParamsToSession();
             /**
              * Redirect
              */
-            $stepUpURI = ($this->environment == 'PROD') ? 'https://account.swissid.ch/idcheck/rp/stepup/lot1' : 'https://account.sandbox.pre.swissid.ch/idcheck/rp/stepup/lot1';
+            $stepUpURI = ($this->environment == 'PROD') ?
+                'https://account.swissid.ch/idcheck/rp/stepup/lot1' :
+                'https://account.sandbox.pre.swissid.ch/idcheck/rp/stepup/lot1';
             $redirectLocation = $stepUpURI . '?' . http_build_query($params2);
-            header('Location: ' . $redirectLocation);
-            exit;
+            Tools::redirect($redirectLocation);
         } elseif (!$this->steppedUp[$qor]) {
             /**
              * If the end-user was authenticated,
@@ -1190,24 +1194,23 @@ class SwissIDConnector
              * but the step-up was not completed,
              * try to complete the step-up
              */
-            if (isset($_GET['error']) && isset($_GET['error_description'])) {
+            if (Tools::getIsset('error') && Tools::getIsset('error_description')) {
                 /**
                  * If an error occurred while trying to complete the authentication,
                  * relay the error
                  */
-                throw new Exception( $_GET['error_description']);
-            } elseif (isset($_GET['code'])) {
+                throw new Exception(Tools::getValue('error_description'));
+            } elseif (Tools::getIsset('code')) {
                 /**
                  * If an authorization code was obtained,
                  * try to redeem it at the token endpoint
                  */
-                $this->authorizationCode = $_GET['code'];
-
-                $params = array(
+                $this->authorizationCode = Tools::getValue('code');
+                $params = [
                     'grant_type' => 'authorization_code',
                     'code' => $this->authorizationCode,
                     'redirect_uri' => $this->redirectURI
-                );
+                ];
                 $ch = curl_init();
                 curl_setopt($ch, CURLOPT_HEADER, 0);
                 curl_setopt($ch, CURLOPT_USERPWD, $this->clientID . ':' . $this->clientSecret);
@@ -1218,7 +1221,6 @@ class SwissIDConnector
                 $rs = curl_exec($ch);
                 $httpStatus = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
-
                 if ($httpStatus != 200) {
                     /**
                      * If the http status was different from 200,
@@ -1226,38 +1228,33 @@ class SwissIDConnector
                      */
                     throw new Exception('Unexpected http status ' . $httpStatus);
                 }
-
-                if (!$rs2 = json_decode($rs, $associativeP = true)) {
+                if (!$rs2 = json_decode($rs, true)) {
                     /**
                      * If an error has occurred while trying to decode the JSON response,
                      * return an error
                      */
                     throw new Exception(json_last_error_msg());
                 }
-
                 /**
                  * Store the access and refresh token
                  */
                 $this->accessToken = $rs2['access_token'];
                 $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
                 $this->refreshToken = $rs2['refresh_token'];
-
                 /**
                  * Try to get the info from the end-user
                  */
                 if (!$this->getEndUserInfo()) {
                     return;
                 }
-
                 /**
                  * Mark the step-up as being completed
                  */
                 $this->steppedUp[$qor] = true;
-
                 /**
                  * Store state of this object in the session
                  */
-                $_SESSION[get_class($this)] = get_object_vars($this);
+                $this->saveObjectParamsToSession();
                 return;
             } else {
                 /**
@@ -1276,7 +1273,6 @@ class SwissIDConnector
             }
             return;
         }
-        return;
     }
 
     /**
@@ -1284,7 +1280,7 @@ class SwissIDConnector
      *
      * @return bool
      */
-    public function hasError(): bool
+    public function hasError()
     {
         return isset($this->error);
     }
@@ -1301,7 +1297,7 @@ class SwissIDConnector
      *
      * @return array|null
      */
-    public function getError(): ?array
+    public function getError()
     {
         return $this->error;
     }
@@ -1309,12 +1305,42 @@ class SwissIDConnector
     /**
      * Method to raise an unknown error
      *
-     * @param int $line The line from which the method is called
      * @return void
      * @throws Exception
      */
-    private function raiseUnknownError(int $line): void
+    private function raiseUnknownError()
     {
         throw new Exception('An unknown has occured');
+    }
+
+    /**
+     * Store state of this object in the session as cookies
+     *
+     * @throws Exception
+     */
+    private function saveObjectParamsToSession()
+    {
+        try {
+            $_SESSION[get_class($this)] = get_object_vars($this);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * Reconstruct class member variables from the session, if not all parameters are set
+     * and if data is available in the session
+     *
+     * @throws Exception
+     */
+    private function reconstructObjectBasedOnSession()
+    {
+        try {
+            foreach ($_SESSION[get_class($this)] as $key => $val) {
+                $this->$key = $val;
+            }
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
     }
 }
