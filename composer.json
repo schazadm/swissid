@@ -3,8 +3,8 @@
   "description": "Provides the possibility for a customer to log in with his SwissID.",
   "authors": [
     {
-      "name": "OSR Dev",
-      "email": "info@os-rieder.ch"
+      "name": "Schazad Mohammad",
+      "email": "schazad.mohammad@os-rieder.ch"
     }
   ],
   "autoload": {
