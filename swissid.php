@@ -128,17 +128,17 @@ class Swissid extends Module
                 'class_name' => static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER
             ],
             [
-                'name' => $this->l('Verified'),
+                'name' => 'SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
             ],
             [
-                'name' => $this->l('Non Verified'),
+                'name' => $this->l('Local') . ' ' . $this->trans('Customer', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER
             ],
             [
-                'name' => $this->l('Over 18 Products'),
+                'name' => $this->l('≥18 Products'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_AGE_OVER_PRODUCT_CONTROLLER
             ],
@@ -164,6 +164,7 @@ class Swissid extends Module
             Configuration::updateValue('SWISSID_AGE_VERIFICATION_TEXT', '');
             Configuration::updateValue('SWISSID_AGE_VERIFICATION_OPTIONAL', '');
             Configuration::updateValue('SWISSID_AGE_OVER_PRODUCT', '');
+            Configuration::updateValue('SWISSID_EMAIL_MATCHING', '');
         } catch (Exception | PrestaShopException $e) {
             return false;
         }
@@ -185,6 +186,7 @@ class Swissid extends Module
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION_TEXT');
             Configuration::deleteByName('SWISSID_AGE_VERIFICATION_OPTIONAL');
             Configuration::deleteByName('SWISSID_AGE_OVER_PRODUCT');
+            Configuration::deleteByName('SWISSID_EMAIL_MATCHING');
         } catch (Exception | PrestaShopException $e) {
             return false;
         }
