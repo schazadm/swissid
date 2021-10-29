@@ -52,7 +52,8 @@ class AdminSwissidCustomerController extends ModuleAdminController
     {
         parent::init();
         $this->initList();
-        $this->initForm();
+        // disable manual add -> because merchant doesn't know sub_id and that is important
+        // $this->initForm();
     }
 
     /**
