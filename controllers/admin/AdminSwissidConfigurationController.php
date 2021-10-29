@@ -123,7 +123,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                     ],
                     'SWISSID_AGE_OVER_PRODUCT' => [
                         'title' => $this->module->l(
-                            'Over 18 Products',
+                            'Product-specific age verification',
                             self::FILE_NAME
                         ),
                         'desc' => $this->module->l(
@@ -167,7 +167,30 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                 'submit' => [
                     'title' => $this->trans('Save', [], 'Admin.Actions')
                 ]
-            ]
+            ],
+            'swissid_email_matching' => [
+                'title' => $this->module->l(
+                    'SwissID E-Mail Matching',
+                    self::FILE_NAME
+                ),
+                'fields' => [
+                    'SWISSID_EMAIL_MATCHING' => [
+                        'title' => $this->module->l(
+                            'E-Mail Matching',
+                            self::FILE_NAME
+                        ),
+                        'desc' => $this->module->l(
+                            'Decide whether the age should be verified (≥18)',
+                            self::FILE_NAME
+                        ),
+                        'type' => 'bool',
+                        'cast' => 'boolval',
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->trans('Save', [], 'Admin.Actions')
+                ]
+            ],
         ];
         return $this->renderOptions();
     }
