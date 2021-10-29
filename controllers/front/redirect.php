@@ -215,6 +215,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $rs = [
                 'response' => [
                     'email' => '',
+                    'sub_id' => '',
                     'age_over' => '',
                 ]
             ];
@@ -222,6 +223,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 $this->requestHasUserSufficientQOR();
                 $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
             }
+            $rs['response']['sub_id'] = $this->swissIDConnector->getClaim('sub')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
             if (!empty($rs)) {
                 $actionType = $this->context->cookie->__get(self::COOKIE_ACTION_TYPE);
@@ -250,11 +252,13 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $this->requestHasUserSufficientQOR();
             $rs = [
                 'response' => [
+                    'sub_id' => '',
                     'email' => '',
                     'birthday' => '',
                     'age_over' => '',
                 ]
             ];
+            $rs['response']['sub_id'] = $this->swissIDConnector->getClaim('sub')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
             $rs['response']['birthday'] = $this->swissIDConnector->getClaim('urn:swissid:date_of_birth')['value'];
             $rs['response']['age_over'] = $this->swissIDConnector->getClaim('urn:swissid:age_over')['value'];
@@ -313,6 +317,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                     'lastname' => '',
                     'language' => '',
                     'email' => '',
+                    'sub_id' => '',
                 ]
             ];
             if ($configValues['SWISSID_AGE_VERIFICATION']) {
@@ -328,6 +333,7 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
             $rs['response']['lastname'] = $this->swissIDConnector->getClaim('family_name')['value'];
             $rs['response']['language'] = $this->swissIDConnector->getClaim('language')['value'];
             $rs['response']['email'] = $this->swissIDConnector->getClaim('email')['value'];
+            $rs['response']['sub_id'] = $this->swissIDConnector->getClaim('sub')['value'];
             if (!empty($rs)) {
                 Tools::redirect(
                     $this->context->link->getModuleLink(

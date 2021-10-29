@@ -32,6 +32,11 @@ class SwissidCustomer extends ObjectModel
     public $id_customer;
 
     /**
+     * @var string SwissID's unique identifier that does not change
+     */
+    public $sub_id;
+
+    /**
      * @var int Customer age verification over 18+
      */
     public $age_over;
@@ -44,6 +49,7 @@ class SwissidCustomer extends ObjectModel
         'primary' => 'id_swissid_customer',
         'fields' => [
             'id_customer' => ['type' => self::TYPE_INT, 'validate' => 'isInt', 'size' => 10],
+            'sub_id' => ['type' => self::TYPE_STRING],
             'age_over' => ['type' => self::TYPE_BOOL, 'validate' => 'isBool'],
         ]
     ];
@@ -68,6 +74,43 @@ class SwissidCustomer extends ObjectModel
             return (bool)$result;
         } catch (Exception $exception) {
             return false;
+        }
+    }
+
+    /**
+     * Checks whether an entry with the given sub id exists in in the main table
+     *
+     * @param string $sub_id
+     * @return bool
+     */
+    public static function doesSubIdExists($sub_id)
+    {
+        try {
+            $sql = new DbQuery();
+            $sql->select('sc.*');
+            $sql->from(SwissidCustomer::$definition['table'], 'sc');
+            $sql->where('sc.sub_id = "' . $sub_id . '"');
+            $result = Db::getInstance()->getValue($sql);
+            return (bool)$result;
+        } catch (Exception $exception) {
+            return false;
+        }
+    }
+
+    /**
+     * @param $sub_id
+     * @return false|string|null
+     */
+    public static function getCustomerBySubID($sub_id)
+    {
+        try {
+            $sql = new DbQuery();
+            $sql->select('sc.id_customer');
+            $sql->from(SwissidCustomer::$definition['table'], 'sc');
+            $sql->where('sc.sub_id = "' . $sub_id . '"');
+            return Db::getInstance()->getValue($sql);
+        } catch (Exception $exception) {
+            return null;
         }
     }
 
@@ -119,22 +162,24 @@ class SwissidCustomer extends ObjectModel
     }
 
     /**
-     * Adds an entry with the given customer id
+     * Adds an entry with the given customer id and sub id
      * optionally age over
      *
      * @param int $customer_id
+     * @param string $sub_id
      * @param int $ageOver
      * @return bool
      */
-    public static function addSwissidCustomer($customer_id, $ageOver = 0)
+    public static function addSwissidCustomer($customer_id, $sub_id, $ageOver = 0)
     {
         if (!self::checkCustomerId($customer_id)) {
             return false;
         }
         try {
             $sql = '
-            INSERT INTO `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] . '` (`id_customer`, `age_over`)
-            VALUES (' . (int)$customer_id . ', ' . (int)$ageOver . ')';
+            INSERT INTO `' . _DB_PREFIX_ . SwissidCustomer::$definition['table'] .
+                '` (`id_customer`, `sub_id` ,`age_over`)
+            VALUES (' . (int)$customer_id . ', "' . $sub_id . '", ' . (int)$ageOver . ')';
             return Db::getInstance()->execute($sql);
         } catch (Exception $exception) {
             return false;

@@ -98,7 +98,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     {
         if (Tools::getIsset('response')) {
             $rs = Tools::getValue('response')['response'];
-            if (isset($rs['email']) && !empty($rs['email'])) {
+            if (isset($rs['sub_id']) && isset($rs['email']) && !empty($rs['sub_id']) && !empty($rs['email'])) {
                 $ageOver = null;
                 if (isset($rs['age_over']) && !empty($rs['age_over'])) {
                     $ageOverFlag = $rs['age_over'];
@@ -108,7 +108,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     }
                 }
                 // authenticate with the given mail address
-                if (!$this->authenticateCustomer($rs['email'], $ageOver)) {
+                if (!$this->authenticateCustomer($rs['sub_id'], $rs['email'], $ageOver)) {
                     // if the authentication process failed set an error message as a cookie for the hook
                     $this->errors[] = $this->translator->trans(
                         'Authentication failed.',
@@ -171,7 +171,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                 }
             }
             // add newly created customer to swissID table
-            SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
+            SwissidCustomer::addSwissidCustomer($customer->id, $rs['sub_id'], $ageOver);
             $this->info[] = $this->module->l(
                 'Your newly created local account was automatically linked to your SwissID account.',
                 self::FILE_NAME
@@ -209,7 +209,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     // if age over is also given set it else just default 0
                     $ageOver = (isset($rs['age_over']) && !empty($rs['age_over'])) ? $rs['age_over'] : 0;
                     // try to add the SwissID customer entry
-                    if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $ageOver)) {
+                    if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $rs['sub_id'], $ageOver)) {
                         $this->success[] = $this->module->l(
                             'Successfully connected to your SwissID',
                             self::FILE_NAME
@@ -301,7 +301,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                             }
                         } else {
                             // try to add the SwissID customer entry
-                            if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $ageOver)) {
+                            if (SwissidCustomer::addSwissidCustomer($this->context->customer->id, $rs['sub_id'], $ageOver)) {
                                 $this->info[] = $this->module->l(
                                     'Your local account was also linked to your SwissID account. ' .
                                     'You are now able to login with your SwissID.',
@@ -371,13 +371,22 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
     /**
      * Tries to authenticate a customer with the given email address
      *
+     * @param string $sub_id A valid sub identifier
      * @param string $mail A valid email address
      * @param null $ageOver
      * @return bool Returns true if customer exists and is authenticated
      */
-    private function authenticateCustomer($mail, $ageOver = null)
+    private function authenticateCustomer($sub_id, $mail, $ageOver = null)
     {
         try {
+            // check whether sub id exists
+            if (SwissidCustomer::doesSubIdExists($sub_id)) {
+                $customer_id = SwissidCustomer::getCustomerBySubID($sub_id);
+
+                var_dump($customer_id);
+                exit();
+            }
+
             // check whether a customer with the given email address already exists
             if (!Customer::customerExists($mail)) {
                 // request data
@@ -402,9 +411,9 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     self::FILE_NAME
                 );
                 if ($ageOver != null) {
-                    SwissidCustomer::addSwissidCustomer($customer->id, $ageOver);
+                    SwissidCustomer::addSwissidCustomer($customer->id, $sub_id, $ageOver);
                 } else {
-                    SwissidCustomer::addSwissidCustomer($customer->id);
+                    SwissidCustomer::addSwissidCustomer($customer->id, $sub_id);
                 }
             } else {
                 if ($ageOver != null) {
