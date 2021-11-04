@@ -75,6 +75,7 @@ class Swissid extends Module
             'displayPersonalInformationTop',
             'actionObjectCustomerDeleteAfter',
             'actionObjectProductDeleteAfter',
+            'actionCustomerLogoutAfter',
         ];
         // register hooks
         if (!$this->registerHook($hooks)) {
@@ -426,5 +427,18 @@ class Swissid extends Module
             return false;
         }
         return SwissidAgeOverProduct::removeAgeOverProductByProductId($product->id);
+    }
+
+    /**
+     * hook to react if a customer logs himself out
+     */
+    public function hookActionCustomerLogoutAfter()
+    {
+        $redirectTo = $this->context->link->getModuleLink($this->name, 'authenticate', [
+            'action' => 'logout',
+            'redirect_s' => $this->context->link->getPageLink('authentication'),
+            'redirect_e' => $this->context->link->getPageLink('authentication'),
+        ], true);
+        Tools::redirect($redirectTo);
     }
 }

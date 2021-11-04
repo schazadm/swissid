@@ -176,6 +176,13 @@ class SwissIDConnector
     private $accessToken;
 
     /**
+     * ID Token
+     *
+     * @var string
+     */
+    private $idToken;
+
+    /**
      * Expire timestamp of access token
      *
      * @var int
@@ -246,7 +253,8 @@ class SwissIDConnector
         $clientSecret = null,
         $redirectURI = null,
         $environment = null
-    ) {
+    )
+    {
         $requiredParametersSet = (!is_null($clientID)
             || !is_null($clientSecret)
             || !is_null($redirectURI)
@@ -397,6 +405,7 @@ class SwissIDConnector
          * Store the access and refresh token
          */
         $this->accessToken = $rs2['access_token'];
+        $this->idToken = $rs2['id_token'];
         $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
         $this->refreshToken = $rs2['refresh_token'];
         return true;
@@ -581,6 +590,7 @@ class SwissIDConnector
                  * Store the access and refresh token
                  */
                 $this->accessToken = $rs2['access_token'];
+                $this->idToken = $rs2['id_token'];
                 $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
                 $this->refreshToken = $rs2['refresh_token'];
                 /**
@@ -659,7 +669,8 @@ class SwissIDConnector
         $loginHint = null,
         $prompt = null,
         $maxAge = null
-    ) {
+    )
+    {
         /**
          * Store parameters as class member variables
          */
@@ -1051,7 +1062,8 @@ class SwissIDConnector
         $loginHint = null,
         $prompt = null,
         $maxAge = null
-    ) {
+    )
+    {
         /**
          * Store nonce as class member variable
          */
@@ -1239,6 +1251,7 @@ class SwissIDConnector
                  * Store the access and refresh token
                  */
                 $this->accessToken = $rs2['access_token'];
+                $this->idToken = $rs2['id_token'];
                 $this->accessTokenExpirationTimestamp = time() + (int)$rs2['expires_in'];
                 $this->refreshToken = $rs2['refresh_token'];
                 /**
@@ -1273,6 +1286,39 @@ class SwissIDConnector
             }
             return;
         }
+    }
+
+    /**
+     * Requests a end session
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function endSession()
+    {
+        if (!$this->connectorInitialized) {
+            return true;
+        }
+        if (time() > $this->accessTokenExpirationTimestamp) {
+            return true;
+        }
+        $params = [
+            'id_token_hint' => $this->idToken,
+            'redirect_uri' => $this->redirectURI
+        ];
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_USERPWD, $this->clientID . ':' . $this->clientSecret);
+        curl_setopt(
+            $ch,
+            CURLOPT_URL,
+            $this->openidConfiguration['end_session_endpoint'] . '?' . http_build_query($params)
+        );
+        curl_exec($ch);
+        curl_close($ch);
+        // unset session variable
+        unset($_SESSION[get_class($this)]);
+        return true;
     }
 
     /**

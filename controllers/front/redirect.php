@@ -98,6 +98,10 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'login');
                     $this->requestUserAuthentication();
                     break;
+                case 'logout':
+                    $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'logout');
+                    $this->logoutAction();
+                    break;
                 case 'register':
                     $this->context->cookie->__set(self::COOKIE_ACTION_TYPE, 'register');
                     $this->requestRegistrationInformation();
@@ -240,6 +244,35 @@ class SwissidRedirectModuleFrontController extends ModuleFrontController
                 );
             }
             $this->responseError();
+        } catch (Exception $e) {
+            $this->showError($e->getMessage());
+        }
+    }
+
+    private function logoutAction()
+    {
+        try {
+            $rs = [
+                'response' => [
+                    'code' => '',
+                ]
+            ];
+            if ($this->swissIDConnector->endSession()) {
+                $rs['response']['code'] = 'success';
+            } else {
+                $rs['response']['code'] = 'error';
+            }
+            Tools::redirect(
+                $this->context->link->getModuleLink(
+                    $this->module->name,
+                    'authenticate',
+                    [
+                        'action' => 'logout',
+                        'response' => $rs
+                    ],
+                    true
+                )
+            );
         } catch (Exception $e) {
             $this->showError($e->getMessage());
         }

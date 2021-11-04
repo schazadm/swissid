@@ -101,13 +101,30 @@ class SwissidCustomer extends ObjectModel
      * @param $sub_id
      * @return false|string|null
      */
-    public static function getCustomerBySubID($sub_id)
+    public static function getCustomerBySubId($sub_id)
     {
         try {
             $sql = new DbQuery();
             $sql->select('sc.id_customer');
             $sql->from(SwissidCustomer::$definition['table'], 'sc');
             $sql->where('sc.sub_id = "' . $sub_id . '"');
+            return Db::getInstance()->getValue($sql);
+        } catch (Exception $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * @param $customer_id
+     * @return false|string|null
+     */
+    public static function getSubIdByCustomerId($customer_id)
+    {
+        try {
+            $sql = new DbQuery();
+            $sql->select('sc.sub_id');
+            $sql->from(SwissidCustomer::$definition['table'], 'sc');
+            $sql->where('sc.id_customer = ' . (int)$customer_id);
             return Db::getInstance()->getValue($sql);
         } catch (Exception $exception) {
             return null;
