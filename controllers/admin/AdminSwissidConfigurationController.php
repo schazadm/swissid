@@ -127,12 +127,11 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                             self::FILE_NAME
                         ),
                         'desc' => $this->module->l(
-                            'Decide whether a general age verification is needed or just for specific products.',
+                            'Decide whether the age verification should only be applied to specific products.',
                             self::FILE_NAME
                         ),
                         'hint' => $this->module->l(
-                            'If you activate age verification for specific products, ' .
-                            'then you can manage your ≥18 products under its separate tab.',
+                            'If you activate age verification for specific products, then you can manage your ≥18 products under its separate tab.',
                             self::FILE_NAME
                         ),
                         'type' => 'bool',
@@ -144,8 +143,7 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                             self::FILE_NAME
                         ),
                         'desc' => $this->module->l(
-                            'Decide whether the age verification should be optional or mandatory. ' .
-                            'If this is option is set to \'True\' then the age verification can be skipped.',
+                            'Decide whether the age verification should be optional. If this option is set to \'True\' then the age verification can be skipped.',
                             self::FILE_NAME
                         ),
                         'type' => 'bool',
@@ -173,16 +171,26 @@ class AdminSwissidConfigurationController extends ModuleAdminController
                     'SwissID E-Mail Matching',
                     self::FILE_NAME
                 ),
+                'description' => $this->module->l(
+                    'In the case that a local customer has the same e-mail address as his SwissID, you can decide whether the local customer account should automatically be linked to the SwissID or whether the customer should first be asked to log in to his local customer account.',
+                    self::FILE_NAME
+                ),
                 'fields' => [
                     'SWISSID_EMAIL_MATCHING' => [
                         'title' => $this->module->l(
-                            'E-Mail Matching',
+                            'Automatic E-Mail Matching',
                             self::FILE_NAME
                         ),
-                        'desc' => $this->module->l(
-                            'Decide whether the age should be verified (≥18)',
-                            self::FILE_NAME
-                        ),
+                        'desc' =>
+                            $this->module->l(
+                                'If this option is set to \'True\' then the local account is automatically linked if the e-mails match. ',
+                                self::FILE_NAME
+                            ) .
+                            '<br>' .
+                            $this->module->l(
+                                'If this option is set to \'False\' then the user needs to login in locally first.',
+                                self::FILE_NAME
+                            ),
                         'type' => 'bool',
                         'cast' => 'boolval',
                     ],

@@ -286,8 +286,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
             $this->redirectWithNotifications($this->getRedirectPage());
         } else {
             $this->errors[] = $this->module->l(
-                'An error occurred while disconnecting your SwissID account from your local account. ' .
-                'Please try again.',
+                'An error occurred while disconnecting your SwissID account from your local account. Please try again.',
                 self::FILE_NAME
             );
             $this->redirectWithNotifications($this->getRedirectPage(true));
@@ -351,8 +350,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                             $this->redirectWithNotifications($this->getRedirectPage(true));
                         }
                         $this->info[] = $this->module->l(
-                            'Your local account was also linked to your SwissID account. ' .
-                            'You are now able to login with your SwissID.',
+                            'Your local account was also linked to your SwissID account. You are now able to login with your SwissID.',
                             self::FILE_NAME
                         );
                     }
@@ -367,8 +365,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     );
                     if (!$isAgeOver) {
                         $this->warning[] = $this->module->l(
-                            'Unfortunately, you are not over 18 years old and you may not be able to ' .
-                            'complete a checkout process because you are underage.',
+                            'Unfortunately, you are not over 18 years old and you may not be able to complete a checkout process because you are underage.',
                             self::FILE_NAME
                         );
                     }
@@ -463,9 +460,7 @@ class SwissidAuthenticateModuleFrontController extends ModuleFrontController
                     $this->updateCustomer($customer);
                 } else {
                     $this->info[] = $this->module->l(
-                        'A local account with this e-mail address already exists. ' .
-                        'Please authenticate with your local credentials and ' .
-                        'connect your local account to your SwissID afterwards.',
+                        'A local account with this e-mail address already exists. Please authenticate with your local credentials and connect your local account to your SwissID afterwards.',
                         self::FILE_NAME
                     );
                     $this->redirectWithNotifications($this->getRedirectPage(true));

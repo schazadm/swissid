@@ -44,16 +44,10 @@ class Swissid extends Module
         $this->author = 'Online Services Rieder GmbH';
         $this->need_instance = 1;
         $this->tab = 'dashboard';
-
         parent::__construct();
-
         $this->displayName = $this->l('SwissID');
         $this->description = $this->l('Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.');
-        $this->confirmUninstall = $this->l('If you uninstall this module, ' .
-                'your customers will no longer be able to log in with their SwissID.') . ' ';
-        $this->confirmUninstall .= $this->l('Before you uninstall the module, ' .
-            'make sure that you made a back-up of your database.');
-
+        $this->confirmUninstall = $this->l('If you uninstall this module, your customers will no longer be able to log in with their SwissID. Before you uninstall the module, make sure that you made a back-up of your database.');
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
     }
 
@@ -129,12 +123,12 @@ class Swissid extends Module
                 'class_name' => static::ADMIN_SWISSID_CONFIGURATION_CONTROLLER
             ],
             [
-                'name' => 'SwissID ' . $this->trans('Customer', [], 'Admin.Global'),
+                'name' => 'SwissID ' . $this->trans('Customers', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_CUSTOMER_CONTROLLER
             ],
             [
-                'name' => $this->l('Local') . ' ' . $this->trans('Customer', [], 'Admin.Global'),
+                'name' => $this->l('Local') . ' ' . $this->trans('Customers', [], 'Admin.Global'),
                 'parent_class_name' => static::ADMIN_SWISSID_PARENT_CONTROLLER,
                 'class_name' => static::ADMIN_SWISSID_NON_CUSTOMER_CONTROLLER
             ],
