@@ -58,6 +58,8 @@
                 </h4>
                 <b>{l s='Redirection-URL:' mod='swissid'}</b>
                 <pre>{$redirect_url}</pre>
+                <b>{l s='Token endpoint authentication method' mod='swissid'}:</b>
+                <pre>client_secret_basic</pre>
                 <br/>
                 <h4>
                     3. {l s='After you receive your "Client ID" and "Secret" (password) then you are ready to start with the configuration of the module.' mod='swissid'}

@@ -49,6 +49,7 @@ class Swissid extends Module
         $this->description = $this->l('Provides the possibility for a customer to log in with his SwissID. This allows customers to authenticate themselves securely and easily. In addition, this module enables age verification through the SwissID. This way you can introduce a general age restriction or an age restriction on certain articles.');
         $this->confirmUninstall = $this->l('If you uninstall this module, your customers will no longer be able to log in with their SwissID. Before you uninstall the module, make sure that you made a back-up of your database.');
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
+        $this->module_key = '34b8056876e12e4ff3d4996a1b6e5274';
     }
 
     public function install()

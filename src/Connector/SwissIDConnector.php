@@ -253,8 +253,7 @@ class SwissIDConnector
         $clientSecret = null,
         $redirectURI = null,
         $environment = null
-    )
-    {
+    ) {
         $requiredParametersSet = (!is_null($clientID)
             || !is_null($clientSecret)
             || !is_null($redirectURI)
@@ -669,8 +668,7 @@ class SwissIDConnector
         $loginHint = null,
         $prompt = null,
         $maxAge = null
-    )
-    {
+    ) {
         /**
          * Store parameters as class member variables
          */
@@ -1062,8 +1060,7 @@ class SwissIDConnector
         $loginHint = null,
         $prompt = null,
         $maxAge = null
-    )
-    {
+    ) {
         /**
          * Store nonce as class member variable
          */
