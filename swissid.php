@@ -50,8 +50,6 @@ class Swissid extends Module
         $this->confirmUninstall = $this->l('If you uninstall this module, your customers will no longer be able to log in with their SwissID. Before you uninstall the module, make sure that you made a back-up of your database.');
         $this->ps_versions_compliancy = ['min' => '1.7.5.0', 'max' => _PS_VERSION_];
         $this->module_key = '34b8056876e12e4ff3d4996a1b6e5274';
-
-        
     }
 
     public function install()
