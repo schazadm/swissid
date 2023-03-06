@@ -1,1 +1,1 @@
-# SwissID
+# SwissID - PrestaShop authentication module
